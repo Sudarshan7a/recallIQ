@@ -1,26 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors from DESIGN.md */
+  --color-surface: #fcf9f5;
+  --color-surface-dim: #dcdad6;
+  --color-surface-bright: #fcf9f5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f6f3ef;
+  --color-surface-container: #f0edea;
+  --color-surface-container-high: #ebe8e4;
+  --color-surface-container-highest: #e5e2de;
+  --color-on-surface: #1c1c1a;
+  --color-on-surface-variant: #464555;
+  --color-inverse-surface: #31302e;
+  --color-inverse-on-surface: #f3f0ec;
+  --color-outline: #777586;
+  --color-outline-variant: #c8c4d7;
+  --color-surface-tint: #5145dd;
+  --color-primary: #4334cf;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #5c51e8;
+  --color-on-primary-container: #eae6ff;
+  --color-secondary: #006c4e;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #83f5c6;
+  --color-on-secondary-container: #007151;
+  --color-tertiary: #754600;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #965b00;
+  --color-on-tertiary-container: #ffe4cc;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-primary-fixed: #e3dfff;
+  --color-primary-fixed-dim: #c4c0ff;
+  --color-background: #fcf9f5;
+  --color-on-background: #1c1c1a;
+  --color-surface-variant: #e5e2de;
+
+  /* Typography */
+  --font-display: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+
+  /* Radii */
+  --radius-sm: 0.25rem;
+  --radius-default: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --space-base: 4px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --gutter: 16px;
+  --margin-mobile: 16px;
+  --margin-desktop: 40px;
+
+  /* Elevation */
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-pop: 0 4px 12px rgba(0,0,0,0.12);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark theme - using next-themes will toggle class 'dark' on html */
+:root.dark {
+  --color-surface: #0a0a0a;
+  --color-on-surface: #ededed;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* Utility helpers mapped to design tokens */
+.card {
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-surface-variant);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+}
+
+.rounded-input { border-radius: 6px; }
+
