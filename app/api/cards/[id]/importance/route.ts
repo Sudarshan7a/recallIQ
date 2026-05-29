@@ -6,9 +6,10 @@ import { eq, and } from "drizzle-orm";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = getUserFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +27,7 @@ export async function PATCH(
     const [card] = await db
       .update(cards)
       .set({ importance })
-      .where(and(eq(cards.id, params.id), eq(cards.userId, userId)))
+      .where(and(eq(cards.id, id), eq(cards.userId, userId)))
       .returning();
 
     if (!card) {

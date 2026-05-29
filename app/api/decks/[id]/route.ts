@@ -7,9 +7,10 @@ import { eq, and } from "drizzle-orm";
 // GET single deck with its cards
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = getUserFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,7 +19,7 @@ export async function GET(
     const [deck] = await db
       .select()
       .from(decks)
-      .where(and(eq(decks.id, params.id), eq(decks.userId, userId)))
+      .where(and(eq(decks.id, id), eq(decks.userId, userId)))
       .limit(1);
 
     if (!deck) {
@@ -28,7 +29,7 @@ export async function GET(
     const deckCards = await db
       .select()
       .from(cards)
-      .where(and(eq(cards.deckId, params.id), eq(cards.userId, userId)));
+      .where(and(eq(cards.deckId, id), eq(cards.userId, userId)));
 
     return NextResponse.json({ deck, cards: deckCards });
   } catch (error) {
@@ -43,9 +44,10 @@ export async function GET(
 // PATCH update deck
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = getUserFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -56,7 +58,7 @@ export async function PATCH(
     const [deck] = await db
       .update(decks)
       .set({ name, description })
-      .where(and(eq(decks.id, params.id), eq(decks.userId, userId)))
+      .where(and(eq(decks.id, id), eq(decks.userId, userId)))
       .returning();
 
     if (!deck) {
@@ -76,9 +78,10 @@ export async function PATCH(
 // DELETE deck
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = getUserFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -86,7 +89,7 @@ export async function DELETE(
 
     await db
       .delete(decks)
-      .where(and(eq(decks.id, params.id), eq(decks.userId, userId)));
+      .where(and(eq(decks.id, id), eq(decks.userId, userId)));
 
     return NextResponse.json({ success: true });
   } catch (error) {

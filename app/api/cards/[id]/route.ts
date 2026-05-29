@@ -6,9 +6,10 @@ import { eq, and } from "drizzle-orm";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = getUserFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,7 +26,7 @@ export async function PATCH(
         ...(state && { state }),
         ...(tags && { tags }),
       })
-      .where(and(eq(cards.id, params.id), eq(cards.userId, userId)))
+      .where(and(eq(cards.id, id), eq(cards.userId, userId)))
       .returning();
 
     if (!card) {
@@ -44,9 +45,10 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = getUserFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -54,7 +56,7 @@ export async function DELETE(
 
     await db
       .delete(cards)
-      .where(and(eq(cards.id, params.id), eq(cards.userId, userId)));
+      .where(and(eq(cards.id, id), eq(cards.userId, userId)));
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -68,9 +70,10 @@ export async function DELETE(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = getUserFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -79,7 +82,7 @@ export async function GET(
     const [card] = await db
       .select()
       .from(cards)
-      .where(and(eq(cards.id, params.id), eq(cards.userId, userId)))
+      .where(and(eq(cards.id, id), eq(cards.userId, userId)))
       .limit(1);
 
     if (!card) {
