@@ -20,6 +20,16 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
+    // Get the user
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
     // Get the card
     const [card] = await db
@@ -88,12 +98,43 @@ export async function POST(req: NextRequest) {
       reviewTime: new Date(),
     });
 
-    // Award XP to user
+    // Calculate streak
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    let newStreak = user.streak ?? 0;
+
+    if (user.lastStudiedAt) {
+      const lastStudied = new Date(user.lastStudiedAt);
+      const lastStudiedDay = new Date(lastStudied);
+      lastStudiedDay.setHours(0, 0, 0, 0);
+
+      if (lastStudiedDay.getTime() === yesterday.getTime()) {
+        // Studied yesterday — increment streak
+        newStreak = newStreak + 1;
+      } else if (lastStudiedDay.getTime() === today.getTime()) {
+        // Already studied today — keep streak
+        newStreak = newStreak;
+      } else {
+        // Missed a day — reset streak
+        newStreak = 1;
+      }
+    } else {
+      // First time ever studying
+      newStreak = 1;
+    }
+
+    // Award XP and update streak
     await db
       .update(users)
       .set({
         xp: sql`${users.xp} + ${xpEarned}`,
-        lastStudiedAt: new Date(),
+        streak: newStreak,
+        lastStudiedAt: now,
       })
       .where(eq(users.id, userId));
 
@@ -101,6 +142,7 @@ export async function POST(req: NextRequest) {
       updated_card: updatedCard,
       xp_earned: xpEarned,
       next_due: result.due,
+      streak: newStreak,
     });
   } catch (error) {
     console.error("Review error:", error);
