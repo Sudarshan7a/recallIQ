@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Home, Zap, Plus, Layers, BarChart2, Settings } from 'lucide-react'
+import DarkModeToggle from '@/components/ui/DarkModeToggle'
 
 interface DesktopSidebarProps {
   dueCount?: number
@@ -57,9 +58,12 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <div className="text-text-primary text-sm font-medium truncate">{user.name}</div>
           <div className="text-text-secondary text-xs truncate">{user.email}</div>
         </div>
-        <button aria-label="settings" className="text-text-secondary">
-          <Settings className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <DarkModeToggle />
+          <button aria-label="settings" className="text-text-secondary">
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </aside>
   )
