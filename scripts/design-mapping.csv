@@ -1,0 +1,17 @@
+design_path,canonical_artifact,target_path,notes
+add_content_ai_loading_state_desktop,add_content_desktop,app/add/loading,page: Add content loading skeleton
+add_content_ai_error_state_desktop_1,add_content_desktop,components/ui/AddContentError.tsx,error state with retry
+add_content_ai_error_state_mobile,add_content_desktop,components/ui/AddContentError.tsx,mobile variant responsive
+add_content_results_state,add_content_results,components/ui/AddContentResults.tsx,render list of generated cards
+add_content_input_state,add_content_input,components/ui/AddContentInput.tsx,main input form
+onboarding_welcome,onboarding_welcome,app/onboarding/welcome/page.tsx,existing - add desktop variant
+onboarding_domain_selection,onboarding_domain,app/onboarding/domain/page.tsx,existing - add desktop variant
+onboarding_daily_goal,onboarding_daily_goal,app/onboarding/daily-goal/page.tsx,existing - add desktop variant
+review_session_desktop,review_session_desktop,app/review/session/desktop/page.tsx,partial - expand variants
+deck_detail_desktop_high_fidelity,deck_detail_desktop_high_fidelity,app/deck/[id]/page.tsx,enhance for desktop
+dashboard_desktop,dashboard_desktop,app/dashboard/page.tsx,enhance for desktop/dark/overload
+your_decks_populated_state,your_decks_populated_state,app/your-decks/page.tsx,implement populated state
+stats_progress_dashboard_desktop,stats_progress_dashboard_desktop,app/stats/page.tsx,add dashboard variant
+recalliq_landing_page_hero_section,recalliq_landing_page_hero_section,app/landing/page.tsx,create landing hero
+recalliq_xp_bar_component_reference_sheet,recalliq_xp_bar_component_reference_sheet,components/ui/XpBar.tsx,XP progress component
+recalliq_card_flip_component_reference_sheet,recalliq_card_flip_component_reference_sheet,components/ui/CardFlip.tsx,interactive card flip
