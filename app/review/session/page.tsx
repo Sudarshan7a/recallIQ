@@ -4,6 +4,8 @@ import React, { useState } from 'react'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import { motion } from 'framer-motion'
+import ReviewCard from '../../../components/ui/ReviewCard'
+
 
 const mockCards = [
   { id: 1, front: 'What is spaced repetition?', back: 'A learning technique...' },
@@ -24,25 +26,29 @@ export default function ReviewSessionPage() {
         <h2 className="text-lg font-medium text-text-primary">Review Session</h2>
         <p className="text-text-secondary text-sm">Focus mode — work through your due cards.</p>
       </header>
-
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="p-6">
-          <div className="text-sm text-text-secondary">Card {index + 1} / {mockCards.length}</div>
-          <div className="mt-4 text-text-primary text-lg font-medium">{card.front}</div>
-          {showBack && <div className="mt-4 text-text-secondary">{card.back}</div>}
-        </Card>
+        <div className="text-sm text-text-secondary">Card {index + 1} / {mockCards.length}</div>
+        <div className="mt-4">
+          <ReviewCard
+            card={card}
+            onRate={(r) => {
+              // simple progression
+              if (index < mockCards.length - 1) {
+                setIndex(i => i + 1)
+              } else {
+                alert('Session complete')
+              }
+            }}
+            onSkip={() => {
+              if (index < mockCards.length - 1) {
+                setIndex(i => i + 1)
+              } else {
+                alert('Session complete')
+              }
+            }}
+          />
+        </div>
       </motion.div>
-
-      <div className="mt-4 flex gap-3">
-        {!showBack ? (
-          <Button variant="secondary" onClick={() => setShowBack(true)}>Show Answer</Button>
-        ) : (
-          <>
-            <Button variant="ghost" onClick={() => { setIndex((i) => Math.max(0, i - 1)); setShowBack(false); }}>Previous</Button>
-            <Button variant="primary" onClick={() => { setIndex((i) => Math.min(i + 1, mockCards.length - 1)); setShowBack(false); }}>Next</Button>
-          </>
-        )}
-      </div>
 
       <div className="mt-6 flex justify-between">
         <Button variant="ghost">Abandon</Button>
