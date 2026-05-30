@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+﻿import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { decks, cards } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/middleware";

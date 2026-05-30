@@ -1,45 +1,67 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cards } from "@/db/schema";
-import { getUserFromRequest } from "@/lib/middleware";
-import { eq, and } from "drizzle-orm";
+import { users } from "@/db/schema";
+import { hashPassword, generateToken } from "@/lib/auth";
+import { eq } from "drizzle-orm";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest) {
   try {
-    const { id } = await params;
-    const userId = getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { name, email, password } = await req.json();
 
-    const { importance } = await req.json();
-
-    if (!["core", "good_to_know", "optional"].includes(importance)) {
+    if (!name || !email || !password) {
       return NextResponse.json(
-        { error: "Invalid importance value" },
-        { status: 400 }
+        { error: "Name, email and password are required" },
+        { status: 400 },
       );
     }
 
-    const [card] = await db
-      .update(cards)
-      .set({ importance })
-      .where(and(eq(cards.id, id), eq(cards.userId, userId)))
-      .returning();
+    // Check if user already exists
+    const existing = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
-    if (!card) {
-      return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    if (existing.length > 0) {
+      return NextResponse.json(
+        { error: "Email already registered" },
+        { status: 409 },
+      );
     }
 
-    return NextResponse.json({ card });
+    // Hash password and create user
+    const hashedPassword = await hashPassword(password);
+
+    const [user] = await db
+      .insert(users)
+      .values({
+        name,
+        email,
+        password: hashedPassword,
+      })
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+      });
+
+    const token = generateToken(user.id);
+
+    const response = NextResponse.json({ user, token }, { status: 201 });
+
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+
+    return response;
   } catch (error) {
-    console.error("Update importance error:", error);
+    console.error("Register error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

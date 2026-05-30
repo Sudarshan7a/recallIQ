@@ -1,99 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+﻿import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { decks, cards } from "@/db/schema";
+import { cards } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/middleware";
-import { eq, and } from "drizzle-orm";
+import { eq, and, lte, arrayContains } from "drizzle-orm";
 
-// GET single deck with its cards
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest) {
   try {
-    const { id } = await params;
     const userId = getUserFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const [deck] = await db
-      .select()
-      .from(decks)
-      .where(and(eq(decks.id, id), eq(decks.userId, userId)))
-      .limit(1);
+    const { searchParams } = new URL(req.url);
+    const deck_id = searchParams.get("deck_id");
+    const importance = searchParams.get("importance");
+    const tag = searchParams.get("tag");
+    const due_today = searchParams.get("due_today");
 
-    if (!deck) {
-      return NextResponse.json({ error: "Deck not found" }, { status: 404 });
-    }
+    const conditions = [eq(cards.userId, userId)];
 
-    const deckCards = await db
+    if (deck_id) conditions.push(eq(cards.deckId, deck_id));
+    if (importance) conditions.push(eq(cards.importance, importance as any));
+    if (due_today === "true") conditions.push(lte(cards.dueDate, new Date()));
+    if (tag) conditions.push(arrayContains(cards.tags, [tag]));
+
+    const result = await db
       .select()
       .from(cards)
-      .where(and(eq(cards.deckId, id), eq(cards.userId, userId)));
+      .where(and(...conditions));
 
-    return NextResponse.json({ deck, cards: deckCards });
+    return NextResponse.json({ cards: result, count: result.length });
   } catch (error) {
-    console.error("Get deck error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-// PATCH update deck
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const userId = getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { name, description } = await req.json();
-
-    const [deck] = await db
-      .update(decks)
-      .set({ name, description })
-      .where(and(eq(decks.id, id), eq(decks.userId, userId)))
-      .returning();
-
-    if (!deck) {
-      return NextResponse.json({ error: "Deck not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ deck });
-  } catch (error) {
-    console.error("Update deck error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE deck
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const userId = getUserFromRequest(req);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    await db
-      .delete(decks)
-      .where(and(eq(decks.id, id), eq(decks.userId, userId)));
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Delete deck error:", error);
+    console.error("Get cards error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

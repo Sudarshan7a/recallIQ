@@ -1,4 +1,4 @@
-import {
+﻿import {
   createEmptyCard,
   fsrs,
   generatorParameters,

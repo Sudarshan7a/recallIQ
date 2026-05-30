@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cards, revlog, users } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/middleware";
@@ -114,13 +114,13 @@ export async function POST(req: NextRequest) {
       lastStudiedDay.setHours(0, 0, 0, 0);
 
       if (lastStudiedDay.getTime() === yesterday.getTime()) {
-        // Studied yesterday — increment streak
+        // Studied yesterday â€” increment streak
         newStreak = newStreak + 1;
       } else if (lastStudiedDay.getTime() === today.getTime()) {
-        // Already studied today — keep streak
+        // Already studied today â€” keep streak
         newStreak = newStreak;
       } else {
-        // Missed a day — reset streak
+        // Missed a day â€” reset streak
         newStreak = 1;
       }
     } else {

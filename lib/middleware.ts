@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
 import { verifyToken } from "./auth";
 
 export function getUserFromRequest(req: NextRequest): string | null {
