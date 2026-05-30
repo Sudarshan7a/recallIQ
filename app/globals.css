@@ -1,21 +1,78 @@
 @import "tailwindcss";
 
 @theme {
-  --color-page-bg: #F8F8F6;
-  --color-card-bg: #FFFFFF;
-  --color-border-color: #E5E5E2;
+  /* Colors from DESIGN.md */
+  --color-background: #F8F8F6;
+  --color-surface: #F8F8F6;
+  --color-card: #FFFFFF;
   --color-text-primary: #1A1A18;
   --color-text-secondary: #888780;
-  --color-indigo: #5C51E8;
-  --color-indigo-light: #EEEDFE;
-  --color-teal: #1D9E75;
-  --color-teal-light: #E1F5EE;
-  --color-amber: #BA7517;
-  --color-amber-light: #FAEEDA;
-  --color-red: #E24B4A;
-  --color-red-light: #FCEBEB;
-  --font-display: var(--font-display);
-  --font-body: var(--font-body);
+  --color-border: #E5E5E2;
+
+  --color-primary: #5C51E8;
+  --color-primary-light: #EEEDFE;
+  --color-primary-dark: #3C3489;
+
+  --color-secondary: #1D9E75;
+  --color-secondary-light: #E1F5EE;
+  --color-secondary-dark: #085041;
+
+  --color-tertiary: #BA7517;
+  --color-tertiary-light: #FAEEDA;
+  --color-tertiary-dark: #633806;
+
+  --color-error: #E24B4A;
+  --color-error-light: #FCEBEB;
+  --color-error-dark: #791F1F;
+
+  --color-dark-bg: #0F0F0E;
+  --color-dark-card: #1A1A18;
+  --color-dark-border: #2C2C2A;
+  --color-dark-text: #F5F5F3;
+  --color-dark-primary: #7F77DD;
+
+  /* Aliases to support components using older or alternative color names */
+  --color-page-bg: var(--color-background);
+  --color-card-bg: var(--color-card);
+  --color-border-color: var(--color-border);
+  --color-indigo: var(--color-primary);
+  --color-indigo-light: var(--color-primary-light);
+  --color-indigo-dark: var(--color-primary-dark);
+  --color-teal: var(--color-secondary);
+  --color-teal-light: var(--color-secondary-light);
+  --color-teal-dark: var(--color-secondary-dark);
+  --color-amber: var(--color-tertiary);
+  --color-amber-light: var(--color-tertiary-light);
+  --color-amber-dark: var(--color-tertiary-dark);
+  --color-red: var(--color-error);
+  --color-red-light: var(--color-error-light);
+  --color-red-dark: var(--color-error-dark);
+
+  /* Fonts & Weights */
+  --font-display: 'DM Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Border Radii from DESIGN.md */
+  --radius-badge: 999px;
+  --radius-chip: 999px;
+  --radius-input: 6px;
+  --radius-card: 12px;
+  --radius-large-card: 16px;
+  --radius-pill-button: 999px;
+
+  /* Spacing from DESIGN.md */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+  --spacing-gutter: 16px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 40px;
+
+  /* Shadows */
   --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-modal: 0 8px 32px rgba(0,0,0,0.08);
 }
@@ -29,7 +86,6 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   overflow-x: hidden;
-  overflow-y: scroll;
 }
 body {
   background-color: var(--color-page-bg);
@@ -45,3 +101,68 @@ a { text-decoration: none; color: inherit; }
 img { max-width: 100%; display: block; }
 input, textarea { font-family: inherit; border: none; outline: none; }
 h1,h2,h3,h4,h5,h6,p,ul,ol,li { margin: 0; padding: 0; list-style: none; font-weight: inherit; }
+
+/* Custom Typography from DESIGN.md */
+.text-display-lg {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 56px;
+  letter-spacing: -0.02em;
+}
+.text-headline-lg {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 40px;
+  letter-spacing: -0.01em;
+}
+.text-headline-lg-mobile {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 36px;
+}
+.text-headline-md {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 32px;
+}
+.text-headline-sm {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+}
+.text-body-lg {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+}
+.text-body-md {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+.text-body-sm {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+.text-label-md {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+}
+.text-label-sm {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
