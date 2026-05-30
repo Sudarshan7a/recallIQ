@@ -1,26 +1,23 @@
-"use client"
+import type { Metadata } from 'next';
+import { DM_Sans, Inter } from 'next/font/google';
+import './globals.css';
 
-import './globals.css'
-import type { ReactNode } from 'react'
-import { ThemeProvider } from 'next-themes'
-import { Inter } from 'next/font/google'
-import DesktopSidebar from '../components/layout/DesktopSidebar'
-import BottomNav from '../components/layout/BottomNav'
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-display' });
+const inter = Inter({ subsets: ['latin'], variable: '--font-body' });
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' })
+export const metadata: Metadata = {
+  title: 'RecallIQ',
+  description: 'RecallIQ App',
+};
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" className={inter.className}>
-      <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <DesktopSidebar />
-          <main className="min-h-screen bg-background pb-16 xl:pb-0 xl:ml-[240px] px-4 md:px-6 xl:px-10 py-6 xl:py-10">
-            {children}
-          </main>
-          <BottomNav />
-        </ThemeProvider>
-      </body>
+    <html lang="en" className={`${dmSans.variable} ${inter.variable}`}>
+      <body>{children}</body>
     </html>
-  )
+  );
 }
