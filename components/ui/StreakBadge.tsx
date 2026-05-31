@@ -1,4 +1,7 @@
+"use client";
+
 import { Flame, Trophy, Snowflake } from "lucide-react";
+import { motion } from "framer-motion";
 
 type StreakState = "active" | "broken" | "at-risk" | "freeze";
 type StreakSize = "sm" | "md" | "lg";
@@ -14,62 +17,66 @@ export function StreakBadge({
   state = "active",
   size = "md",
 }: StreakBadgeProps) {
-  // Determine sizing classes
+  // Sizing styles: clean height and pad
   const sizeClasses = {
-    sm: "h-[28px] px-2.5 text-xs",
-    md: "h-[36px] px-4 text-sm",
-    lg: "h-[44px] px-5 text-base",
+    sm: "h-[26px] px-2.5 text-xs gap-1",
+    md: "h-[32px] px-3.5 text-sm gap-1.5",
+    lg: "h-[40px] px-4.5 text-base gap-2",
   }[size];
 
   const iconSize =
-    size === "sm" ? "w-3 h-3" : size === "lg" ? "w-5 h-5" : "w-4 h-4";
+    size === "sm" ? "w-3.5 h-3.5" : size === "lg" ? "w-5 h-5" : "w-4 h-4";
 
-  // Determine Milestone overrides
+  // Determine state-based quiet colors (Apple design: subtle light tints or dark mode solid grays)
   let isMilestone = false;
-  let milestoneClass = "";
+  let themeClasses = "";
   let Icon = Flame;
 
   if (state === "active") {
     if (days >= 100) {
       isMilestone = true;
       Icon = Trophy;
-      milestoneClass =
-        "bg-gradient-to-r from-primary-dark to-primary text-white shadow-[0_0_12px_rgba(92,81,232,0.6)] border-none";
+      themeClasses =
+        "bg-amber-50/80 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/30";
     } else if (days >= 30) {
       isMilestone = true;
-      milestoneClass =
-        "bg-gradient-to-r from-tertiary to-error text-white shadow-sm border-none";
+      themeClasses =
+        "bg-orange-50/80 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 border-orange-200/40 dark:border-orange-900/20";
     } else if (days >= 7) {
       isMilestone = true;
-      milestoneClass = "bg-secondary text-white shadow-sm border-none";
+      themeClasses =
+        "bg-yellow-50/80 dark:bg-yellow-950/20 text-yellow-600 dark:text-yellow-400 border-yellow-200/40 dark:border-yellow-900/20";
+    } else {
+      themeClasses =
+        "bg-amber-50/80 dark:bg-amber-950/20 text-amber-600 dark:text-amber-500 border-amber-200/40 dark:border-amber-900/20";
     }
+  } else if (state === "broken") {
+    themeClasses =
+      "bg-zinc-100/60 dark:bg-zinc-900/60 text-zinc-400 dark:text-zinc-550 border-zinc-200/50 dark:border-zinc-800/80";
+  } else if (state === "at-risk") {
+    themeClasses =
+      "bg-red-50/80 dark:bg-red-950/20 text-red-600 dark:text-red-400 border-red-200/40 dark:border-red-900/20";
+  } else if (state === "freeze") {
+    Icon = Snowflake;
+    themeClasses =
+      "bg-blue-50/80 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border-blue-200/40 dark:border-blue-900/20";
   }
 
-  // Determine standard state classes
-  const stateClasses = {
-    active:
-      "bg-primary text-white shadow-[0_4px_8px_rgba(92,81,232,0.2)] border border-primary/10", // Soft indigo glow
-    broken:
-      "bg-surface-variant text-text-secondary border border-border grayscale",
-    "at-risk": "bg-tertiary-light text-tertiary border border-tertiary/30",
-    freeze: "bg-primary-light text-primary border border-primary/20",
-  }[state];
-
-  // Apply Freeze icon override
-  if (state === "freeze") Icon = Snowflake;
-
-  const appliedClasses = isMilestone ? milestoneClass : stateClasses;
-
   return (
-    <div
-      className={`inline-flex items-center gap-1.5 rounded-pill font-label font-semibold transition-all duration-300 ${sizeClasses} ${appliedClasses}`}
+    <motion.div
+      whileHover={{ scale: 1.02, y: -0.5 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 28 }}
+      className={`inline-flex items-center rounded-full font-sans font-medium transition-colors duration-200 cursor-pointer select-none border backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.01)] ${sizeClasses} ${themeClasses}`}
     >
-      <Icon
-        className={`${iconSize} ${state === "broken" ? "opacity-50" : "fill-current"}`}
-      />
+      <div className="flex items-center justify-center shrink-0">
+        <Icon
+          className={`${iconSize} ${state === "broken" ? "opacity-30" : "fill-current"}`}
+        />
+      </div>
 
-      <span className="font-heading font-bold flex items-center gap-1">
-        <span className={state === "broken" ? "line-through opacity-70" : ""}>
+      <span className="font-sans font-semibold tracking-tight flex items-center gap-0.5">
+        <span className={state === "broken" ? "line-through opacity-40" : ""}>
           {days}
           {size !== "sm" && " days"}
         </span>
@@ -77,10 +84,10 @@ export function StreakBadge({
       </span>
 
       {state === "freeze" && size !== "sm" && (
-        <span className="ml-1 font-body font-normal text-[10px] uppercase tracking-wider opacity-80">
-          Freeze
+        <span className="ml-1 text-[9px] uppercase tracking-widest font-semibold opacity-60">
+          Frozen
         </span>
       )}
-    </div>
+    </motion.div>
   );
 }

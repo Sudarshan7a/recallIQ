@@ -29,7 +29,18 @@ export default function RootLayout({
       lang="en"
       className={`${dmSans.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col relative isolate bg-background">
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 z-0 opacity-40 pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #E5E5E2 2px, transparent 2px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
+        <div className="relative z-10 flex min-h-full flex-col">{children}</div>
+      </body>
     </html>
   );
 }

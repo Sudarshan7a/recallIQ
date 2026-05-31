@@ -28,10 +28,25 @@ export default function LoginPage() {
     setError("");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 650));
+      const form = new FormData(e.currentTarget as HTMLFormElement);
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.get("email"),
+          password: form.get("password"),
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Invalid credentials. Please try again.");
+      }
+
       router.push("/dashboard");
+      router.refresh();
     } catch (err) {
-      setError("Invalid credentials. Please try again.");
+      setError(err instanceof Error ? err.message : "Invalid credentials. Please try again.");
       setIsLoading(false);
     }
   };
@@ -160,6 +175,7 @@ export default function LoginPage() {
                 <input
                   id="email"
                   type="email"
+                  name="email"
                   required
                   disabled={isLoading}
                   className="block w-full pl-10 pr-3 py-2.5 bg-background border border-border rounded-input text-sm font-body text-text-primary placeholder:text-text-secondary/60 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
@@ -191,6 +207,7 @@ export default function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  name="password"
                   required
                   disabled={isLoading}
                   className="block w-full pl-10 pr-10 py-2.5 bg-background border border-border rounded-input text-sm font-body text-text-primary placeholder:text-text-secondary/60 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"

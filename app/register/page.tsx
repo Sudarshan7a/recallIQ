@@ -11,7 +11,6 @@ import {
   User,
   Sparkles,
   Brain,
-  CheckCircle,
   Flame,
   ShieldAlert,
   AlertTriangle,
@@ -30,10 +29,26 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      const form = new FormData(e.currentTarget as HTMLFormElement);
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.get("name"),
+          email: form.get("email"),
+          password: form.get("password"),
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error ?? "We could not create your account.");
+      }
+
       router.push("/onboarding");
-    } catch {
-      setError("We could not create your mock account. Please try again.");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "We could not create your account.");
       setIsLoading(false);
     }
   };
@@ -161,6 +176,7 @@ export default function RegisterPage() {
                 <input
                   id="name"
                   type="text"
+                  name="name"
                   required
                   disabled={isLoading}
                   className="block w-full pl-10 pr-3 py-2.5 bg-background border border-border rounded-input text-sm font-body text-text-primary placeholder:text-text-secondary/60 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors"
@@ -184,6 +200,7 @@ export default function RegisterPage() {
                 <input
                   id="email"
                   type="email"
+                  name="email"
                   required
                   disabled={isLoading}
                   className="block w-full pl-10 pr-3 py-2.5 bg-background border border-border rounded-input text-sm font-body text-text-primary placeholder:text-text-secondary/60 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors"
@@ -207,6 +224,7 @@ export default function RegisterPage() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  name="password"
                   required
                   disabled={isLoading}
                   minLength={8}

@@ -13,15 +13,7 @@ import {
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-text-primary font-body relative overflow-x-hidden selection:bg-primary-light selection:text-primary-dark">
-      {/* Decorative Dot Grid Background */}
-      <div
-        className="absolute inset-0 z-0 opacity-40 pointer-events-none"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, #E5E5E2 2px, transparent 2px)",
-          backgroundSize: "24px 24px",
-        }}
-      />
+      {/* Dot grid is global — applied via globals.css html{} */}
 
       {/* Navigation Bar */}
       <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
