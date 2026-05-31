@@ -9,6 +9,8 @@ import {
 import { XPBar } from "@/components/ui/XPBar";
 
 export default function StatsPage() {
+  const hasData = true;
+
   return (
     <div className="p-6 md:p-10 max-w-[1440px] mx-auto space-y-8">
       {/* PAGE HEADER */}
@@ -123,165 +125,236 @@ export default function StatsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Retention Rate Area Chart */}
         <div className="lg:col-span-2 bg-card border border-border rounded-large-card p-6 shadow-sm flex flex-col">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-            <div>
-              <h3 className="font-heading font-bold text-lg text-text-primary">
-                Retention Rate
-              </h3>
-              <p className="font-body font-normal text-sm text-text-secondary">
-                Memory decay over time across top decks.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button className="px-3 py-1 rounded-pill bg-background border border-border font-label font-semibold text-xs text-text-secondary hover:text-text-primary transition-colors">
-                Week
-              </button>
-              <button className="px-3 py-1 rounded-pill bg-primary text-white font-label font-semibold text-xs shadow-sm">
-                Month
-              </button>
-              <button className="px-3 py-1 rounded-pill bg-background border border-border font-label font-semibold text-xs text-text-secondary hover:text-text-primary transition-colors">
-                Year
-              </button>
-            </div>
-          </div>
+          {hasData ? (
+            <>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                  <h3 className="font-heading font-bold text-lg text-text-primary">
+                    Retention Rate
+                  </h3>
+                  <p className="font-body font-normal text-sm text-text-secondary">
+                    Memory decay over time across top decks.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="px-3 py-1 rounded-pill bg-background border border-border font-label font-semibold text-xs text-text-secondary hover:text-text-primary transition-colors">
+                    Week
+                  </button>
+                  <button className="px-3 py-1 rounded-pill bg-primary text-white font-label font-semibold text-xs shadow-sm">
+                    Month
+                  </button>
+                  <button className="px-3 py-1 rounded-pill bg-background border border-border font-label font-semibold text-xs text-text-secondary hover:text-text-primary transition-colors">
+                    Year
+                  </button>
+                </div>
+              </div>
 
-          {/* Faux Chart Display Area */}
-          <div className="flex-1 relative min-h-[240px] flex items-end w-full pl-8 pb-6">
-            <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-text-secondary font-label font-semibold text-[10px] pr-2 text-right w-8">
-              <span>100%</span>
-              <span>75%</span>
-              <span>50%</span>
-              <span>25%</span>
-              <span>0%</span>
-            </div>
-            <div className="absolute left-8 right-0 top-0 bottom-6 flex flex-col justify-between z-0">
-              <div className="w-full border-t border-border/50 h-0" />
-              <div className="w-full border-t border-border/50 h-0" />
-              <div className="w-full border-t border-border/50 h-0" />
-              <div className="w-full border-t border-border/50 h-0" />
-              <div className="w-full border-t border-border/50 h-0" />
-            </div>
-            <div className="w-full h-full relative z-10 overflow-hidden pt-4">
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-primary/5 to-primary/20"
-                style={{
-                  clipPath:
-                    "polygon(0 80%, 20% 60%, 40% 65%, 60% 40%, 80% 45%, 100% 20%, 100% 100%, 0 100%)",
-                }}
-              />
-              <svg
-                className="absolute inset-0 h-full w-full overflow-visible"
-                preserveAspectRatio="none"
-                viewBox="0 0 100 100"
-              >
-                <path
-                  d="M 0 80 C 10 70, 15 60, 20 60 C 30 60, 35 65, 40 65 C 50 65, 55 40, 60 40 C 70 40, 75 45, 80 45 C 90 45, 95 20, 100 20"
-                  fill="none"
-                  className="stroke-primary"
-                  strokeWidth="2.5"
-                />
-                <circle
-                  cx="20"
-                  cy="60"
-                  r="1.5"
-                  className="fill-card stroke-primary stroke-2"
-                />
-                <circle
-                  cx="40"
-                  cy="65"
-                  r="1.5"
-                  className="fill-card stroke-primary stroke-2"
-                />
-                <circle
-                  cx="60"
-                  cy="40"
-                  r="1.5"
-                  className="fill-card stroke-primary stroke-2"
-                />
-                <circle
-                  cx="80"
-                  cy="45"
-                  r="1.5"
-                  className="fill-card stroke-primary stroke-2"
-                />
-                <circle cx="100" cy="20" r="2.5" className="fill-primary" />
-              </svg>
-            </div>
-            <div className="absolute left-8 right-0 bottom-0 flex justify-between text-text-secondary font-label font-semibold text-[10px] pt-2">
-              <span>Week 1</span>
-              <span>Week 2</span>
-              <span>Week 3</span>
-              <span>Week 4</span>
-              <span>Current</span>
-            </div>
-          </div>
+              {/* Faux Chart Display Area */}
+              <div className="flex-1 relative min-h-[240px] flex items-end w-full pl-8 pb-6">
+                <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-text-secondary font-label font-semibold text-[10px] pr-2 text-right w-8">
+                  <span>100%</span>
+                  <span>75%</span>
+                  <span>50%</span>
+                  <span>25%</span>
+                  <span>0%</span>
+                </div>
+                <div className="absolute left-8 right-0 top-0 bottom-6 flex flex-col justify-between z-0">
+                  <div className="w-full border-t border-border/50 h-0" />
+                  <div className="w-full border-t border-border/50 h-0" />
+                  <div className="w-full border-t border-border/50 h-0" />
+                  <div className="w-full border-t border-border/50 h-0" />
+                  <div className="w-full border-t border-border/50 h-0" />
+                </div>
+                <div className="w-full h-full relative z-10 overflow-hidden pt-4">
+                  <div
+                    className="absolute inset-0 bg-gradient-to-t from-primary/5 to-primary/20"
+                    style={{
+                      clipPath:
+                        "polygon(0 80%, 20% 60%, 40% 65%, 60% 40%, 80% 45%, 100% 20%, 100% 100%, 0 100%)",
+                    }}
+                  />
+                  <svg
+                    className="absolute inset-0 h-full w-full overflow-visible"
+                    preserveAspectRatio="none"
+                    viewBox="0 0 100 100"
+                  >
+                    <path
+                      d="M 0 80 C 10 70, 15 60, 20 60 C 30 60, 35 65, 40 65 C 50 65, 55 40, 60 40 C 70 40, 75 45, 80 45 C 90 45, 95 20, 100 20"
+                      fill="none"
+                      className="stroke-primary"
+                      strokeWidth="2.5"
+                    />
+                    <circle
+                      cx="20"
+                      cy="60"
+                      r="1.5"
+                      className="fill-card stroke-primary stroke-2"
+                    />
+                    <circle
+                      cx="40"
+                      cy="65"
+                      r="1.5"
+                      className="fill-card stroke-primary stroke-2"
+                    />
+                    <circle
+                      cx="60"
+                      cy="40"
+                      r="1.5"
+                      className="fill-card stroke-primary stroke-2"
+                    />
+                    <circle
+                      cx="80"
+                      cy="45"
+                      r="1.5"
+                      className="fill-card stroke-primary stroke-2"
+                    />
+                    <circle
+                      cx="100"
+                      cy="20"
+                      r="2.5"
+                      className="fill-primary"
+                    />
+                  </svg>
+                </div>
+                <div className="absolute left-8 right-0 bottom-0 flex justify-between text-text-secondary font-label font-semibold text-[10px] pt-2">
+                  <span>Week 1</span>
+                  <span>Week 2</span>
+                  <span>Week 3</span>
+                  <span>Week 4</span>
+                  <span>Current</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="font-heading font-bold text-lg text-text-primary mb-6">
+                Retention over time
+              </h3>
+              <div className="flex-1 min-h-[240px] border-2 border-dashed border-border rounded-card bg-background/40 flex flex-col items-center justify-center text-center px-8">
+                <div className="w-10 h-10 rounded-full border border-border bg-card mb-4" />
+                <h4 className="font-heading font-bold text-xl text-text-primary mb-2">
+                  Watch your memory grow
+                </h4>
+                <p className="font-body font-normal text-sm text-text-secondary max-w-md">
+                  As you review cards, this chart will show how your retention
+                  improves over time. Start a study session to begin tracking.
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Topic Mastery Donut */}
         <div className="bg-card border border-border rounded-large-card p-6 shadow-sm flex flex-col">
-          <h3 className="font-heading font-bold text-lg text-text-primary mb-1">
-            Topic Mastery
-          </h3>
-          <p className="font-body font-normal text-sm text-text-secondary mb-8">
-            Distribution of learned cards.
-          </p>
+          {hasData ? (
+            <>
+              <h3 className="font-heading font-bold text-lg text-text-primary mb-1">
+                Topic Mastery
+              </h3>
+              <p className="font-body font-normal text-sm text-text-secondary mb-8">
+                Distribution of learned cards.
+              </p>
 
-          <div className="flex-1 flex flex-col justify-center items-center">
-            {/* Native CSS Conic Gradient Donut */}
-            <div
-              className="relative w-48 h-48 rounded-full mb-8 flex items-center justify-center"
-              style={{
-                background:
-                  "conic-gradient(var(--color-primary) 0% 45%, var(--color-secondary) 45% 75%, var(--color-tertiary) 75% 90%, var(--color-border) 90% 100%)",
-              }}
-            >
-              <div className="w-32 h-32 bg-card rounded-full flex flex-col items-center justify-center shadow-inner">
-                <span className="font-heading font-bold text-4xl text-text-primary">
-                  4
-                </span>
-                <span className="font-label font-semibold text-[10px] text-text-secondary uppercase tracking-wider">
-                  Active Topics
-                </span>
-              </div>
-            </div>
+              <div className="flex-1 flex flex-col justify-center items-center">
+                {/* Native CSS Conic Gradient Donut */}
+                <div
+                  className="relative w-48 h-48 rounded-full mb-8 flex items-center justify-center"
+                  style={{
+                    background:
+                      "conic-gradient(var(--color-primary) 0% 45%, var(--color-secondary) 45% 75%, var(--color-tertiary) 75% 90%, var(--color-border) 90% 100%)",
+                  }}
+                >
+                  <div className="w-32 h-32 bg-card rounded-full flex flex-col items-center justify-center shadow-inner">
+                    <span className="font-heading font-bold text-4xl text-text-primary">
+                      4
+                    </span>
+                    <span className="font-label font-semibold text-[10px] text-text-secondary uppercase tracking-wider">
+                      Active Topics
+                    </span>
+                  </div>
+                </div>
 
-            {/* Legend */}
-            <div className="w-full flex flex-col gap-3 px-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                  <span className="font-body font-normal text-sm text-text-primary">
-                    Neuroanatomy
+                {/* Legend */}
+                <div className="w-full flex flex-col gap-3 px-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                      <span className="font-body font-normal text-sm text-text-primary">
+                        Neuroanatomy
+                      </span>
+                    </div>
+                    <span className="font-label font-semibold text-xs text-text-secondary">
+                      45%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-secondary" />
+                      <span className="font-body font-normal text-sm text-text-primary">
+                        Pharmacology
+                      </span>
+                    </div>
+                    <span className="font-label font-semibold text-xs text-text-secondary">
+                      30%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-tertiary" />
+                      <span className="font-body font-normal text-sm text-text-primary">
+                        Pathology
+                      </span>
+                    </div>
+                    <span className="font-label font-semibold text-xs text-text-secondary">
+                      15%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="font-heading font-bold text-lg text-text-primary mb-6">
+                Topic mastery
+              </h3>
+
+              <div className="border-2 border-dashed border-border rounded-card bg-background/40 p-4 space-y-3 mb-5">
+                <div className="flex items-center justify-between bg-card rounded-card border border-border px-3 py-2">
+                  <span className="font-body font-normal text-sm text-text-secondary">
+                    Domain 1
+                  </span>
+                  <span className="font-label font-semibold text-sm text-text-secondary">
+                    0%
                   </span>
                 </div>
-                <span className="font-label font-semibold text-xs text-text-secondary">
-                  45%
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-secondary" />
-                  <span className="font-body font-normal text-sm text-text-primary">
-                    Pharmacology
+                <div className="flex items-center justify-between bg-card rounded-card border border-border px-3 py-2">
+                  <span className="font-body font-normal text-sm text-text-secondary">
+                    Domain 2
+                  </span>
+                  <span className="font-label font-semibold text-sm text-text-secondary">
+                    0%
                   </span>
                 </div>
-                <span className="font-label font-semibold text-xs text-text-secondary">
-                  30%
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-tertiary" />
-                  <span className="font-body font-normal text-sm text-text-primary">
-                    Pathology
+                <div className="flex items-center justify-between bg-card rounded-card border border-border px-3 py-2">
+                  <span className="font-body font-normal text-sm text-text-secondary">
+                    Domain 3
+                  </span>
+                  <span className="font-label font-semibold text-sm text-text-secondary">
+                    0%
                   </span>
                 </div>
-                <span className="font-label font-semibold text-xs text-text-secondary">
-                  15%
-                </span>
               </div>
-            </div>
-          </div>
+
+              <div className="mt-auto border border-border rounded-card bg-background/50 p-4 text-center">
+                <h4 className="font-heading font-bold text-base text-text-primary mb-1">
+                  Start building
+                </h4>
+                <p className="font-body font-normal text-sm text-text-secondary">
+                  Create your first deck to track mastery by topic.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
