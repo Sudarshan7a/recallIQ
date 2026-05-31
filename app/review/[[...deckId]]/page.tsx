@@ -14,10 +14,7 @@ import {
   Ban,
   Check,
   Flame,
-  AlertCircle,
-  Share,
   Home,
-  RotateCw,
   Settings,
 } from "lucide-react";
 import { XPBar } from "@/components/ui/XPBar";
@@ -161,7 +158,7 @@ export default function ReviewSessionPage() {
           <div className="w-full flex flex-col gap-3 mb-8">
             <button
               onClick={() => router.push("/dashboard")}
-              className="w-full h-12 bg-primary text-white rounded-card font-label font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
+              className="w-full h-12 bg-primary text-white rounded-card font-label font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary-dark active:scale-95 transition-all shadow-sm"
             >
               <Home className="w-4 h-4 mr-2" /> Return to Dashboard
             </button>
@@ -329,7 +326,7 @@ export default function ReviewSessionPage() {
                 </div>
                 <div className="flex-1 flex items-center justify-center">
                   <h3 className="font-heading font-bold text-4xl text-text-primary text-center">
-                    O(n²)
+                    O(n^2)
                   </h3>
                 </div>
                 <div className="mt-auto border-t border-border/50 pt-6">
@@ -500,7 +497,7 @@ export default function ReviewSessionPage() {
           <div className="w-full space-y-3">
             <button
               onClick={() => setSessionState("active")}
-              className="w-full bg-primary text-white rounded-input py-3 font-label font-bold text-sm active:scale-95 transition-transform"
+              className="w-full bg-primary text-white rounded-input py-3 font-label font-bold text-sm hover:bg-primary-dark active:scale-95 transition-all"
             >
               Resume session
             </button>

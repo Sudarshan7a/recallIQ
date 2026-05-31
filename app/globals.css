@@ -11,6 +11,9 @@
     --tw-text-secondary: #888780;
     --tw-border: #e5e5e2;
     --tw-primary: #5c51e8;
+    --tw-success: #1d9e75;
+    --tw-warning: #ba7517;
+    --tw-danger: #e24b4a;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -42,24 +45,31 @@
   --color-primary-dark: #3c3489;
 
   /* Feedback Colors */
-  --color-secondary: #1d9e75;
+  --color-secondary: var(--tw-success);
+  --color-success: var(--tw-success);
   --color-secondary-light: #e1f5ee;
+  --color-success-light: #e1f5ee;
   --color-secondary-dark: #085041;
 
-  --color-tertiary: #ba7517;
+  --color-tertiary: var(--tw-warning);
+  --color-warning: var(--tw-warning);
   --color-tertiary-light: #faeeda;
+  --color-warning-light: #faeeda;
   --color-tertiary-dark: #633806;
 
   /* Error Colors */
-  --color-error: #e24b4a;
+  --color-error: var(--tw-danger);
+  --color-danger: var(--tw-danger);
   --color-error-light: #fcebeb;
+  --color-danger-light: #fcebeb;
   --color-error-dark: #791f1f;
 
   /* Typography Mapping */
-  --font-display: var(--font-dm-sans), sans-serif;
-  --font-heading: var(--font-dm-sans), sans-serif;
+  --font-display: "Clash Display", var(--font-dm-sans), sans-serif;
+  --font-heading: "Clash Display", var(--font-dm-sans), sans-serif;
   --font-body: var(--font-inter), sans-serif;
   --font-label: var(--font-inter), sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Font Weights */
   --font-weight-normal: 400;
@@ -82,5 +92,65 @@
     background-color: var(--color-background);
     color: var(--color-text-primary);
     font-family: var(--font-body);
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    transition-duration: 180ms;
+  }
+}
+
+@layer utilities {
+  .animate-page-in {
+    animation: page-in 420ms ease-out both;
+  }
+
+  .animate-float-up {
+    animation: float-up 700ms ease-out both;
+  }
+
+  .confetti-overlay {
+    background-image:
+      radial-gradient(circle at 12% 18%, #5c51e8 0 3px, transparent 4px),
+      radial-gradient(circle at 82% 22%, #1d9e75 0 3px, transparent 4px),
+      radial-gradient(circle at 22% 78%, #ba7517 0 3px, transparent 4px),
+      radial-gradient(circle at 70% 72%, #e24b4a 0 3px, transparent 4px);
+    animation: confetti-fade 900ms ease-out both;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes confetti-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

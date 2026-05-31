@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   Flame,
   Target,
@@ -5,14 +8,50 @@ import {
   Star,
   TrendingUp,
   Download,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { XPBar } from "@/components/ui/XPBar";
 
 export default function StatsPage() {
   const hasData = true;
+  const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIsLoading(false), 450);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    setError("");
+    try {
+      await new Promise((resolve) => window.setTimeout(resolve, 600));
+    } catch {
+      setError("CSV export failed. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 md:p-10 max-w-[1440px] mx-auto animate-page-in">
+        <div className="rounded-large-card border border-border bg-card p-10 shadow-sm flex min-h-[360px] flex-col items-center justify-center text-center">
+          <Loader2 className="mb-4 h-9 w-9 animate-spin text-primary" />
+          <h1 className="font-heading text-2xl font-bold">Loading statistics</h1>
+          <p className="mt-2 text-sm text-text-secondary">
+            Building your mock retention charts.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 md:p-10 max-w-[1440px] mx-auto space-y-8">
+    <div className="p-6 md:p-10 max-w-[1440px] mx-auto space-y-8 animate-page-in">
       {/* PAGE HEADER */}
       <div>
         <h1 className="font-heading font-bold text-3xl md:text-4xl text-text-primary tracking-tight mb-1">
@@ -22,6 +61,13 @@ export default function StatsPage() {
           Your learning progress at a glance.
         </p>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-2 rounded-card border border-error/20 bg-error-light p-3 text-sm text-error-dark">
+          <AlertTriangle className="h-4 w-4 text-error" />
+          {error}
+        </div>
+      )}
 
       {/* METRIC CARDS ROW (4 Columns) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -419,8 +465,17 @@ export default function StatsPage() {
           <h3 className="font-heading font-bold text-lg text-text-primary">
             Weekly Breakdown
           </h3>
-          <button className="text-primary font-label font-semibold text-sm hover:underline flex items-center gap-1 transition-colors">
-            Export CSV <Download className="w-4 h-4" />
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            className="text-primary font-label font-semibold text-sm hover:underline flex items-center gap-1 transition-colors disabled:opacity-70"
+          >
+            {isExporting ? "Exporting" : "Export CSV"}
+            {isExporting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
           </button>
         </div>
 

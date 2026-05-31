@@ -12,6 +12,8 @@ import {
   Users,
   Star,
   TrendingUp,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 
 export default function LoginPage() {
@@ -26,7 +28,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Your actual authentication API logic goes here
+      await new Promise((resolve) => setTimeout(resolve, 650));
       router.push("/dashboard");
     } catch (err) {
       setError("Invalid credentials. Please try again.");
@@ -139,7 +141,7 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
               <div className="bg-error-light text-error border border-error/20 p-3 rounded-input text-xs font-body flex items-center gap-2">
-                <span>⚠️</span> {error}
+                <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
               </div>
             )}
 
@@ -214,7 +216,14 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full flex justify-center items-center py-3 px-4 bg-primary hover:bg-primary-dark disabled:bg-primary/70 text-white font-label font-semibold text-sm rounded-card shadow-sm transition-all active:scale-[0.99] disabled:pointer-events-none"
             >
-              {isLoading ? "Processing..." : "Sign In"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
           </form>
 

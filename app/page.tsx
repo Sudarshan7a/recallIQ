@@ -23,10 +23,6 @@ export default function LandingPage() {
         }}
       />
 
-      {/* Glow Rings for Focus-Minimal Aesthetics */}
-      <div className="absolute top-[-200px] right-[-200px] w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px] pointer-events-none z-0" />
-      <div className="absolute bottom-[10%] left-[-200px] w-[600px] h-[600px] rounded-full bg-secondary/5 blur-[120px] pointer-events-none z-0" />
-
       {/* Navigation Bar */}
       <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
@@ -56,11 +52,11 @@ export default function LandingPage() {
       </nav>
 
       {/* Main Landing Area */}
-      <main className="max-w-7xl mx-auto px-6 pt-16 pb-24 flex flex-col items-center text-center relative z-10">
+      <main className="max-w-7xl mx-auto px-6 pt-16 pb-24 flex flex-col items-center text-center relative z-10 animate-page-in">
         {/* Semantic Action Announcement Pill */}
         <div className="inline-flex items-center gap-2 bg-primary-light text-primary border border-primary/20 rounded-pill px-4 py-1.5 mb-8 font-label font-semibold text-xs transition-transform hover:scale-[1.02]">
           <Sparkles className="w-4 h-4 fill-primary/15" />
-          <span>AI-powered spaced repetition — now free</span>
+          <span>AI-powered spaced repetition, now free</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </div>
 
@@ -75,7 +71,7 @@ export default function LandingPage() {
         {/* Short Informative Copy */}
         <p className="font-body font-normal text-text-secondary text-lg sm:text-xl max-w-xl mb-10 leading-relaxed">
           Type what you learned. AI generates flashcards. The algorithm shows
-          them back at exactly the right moment — right before you forget.
+          them back at exactly the right moment, right before you forget.
         </p>
 
         {/* Clean Call To Action Containers */}
@@ -178,7 +174,7 @@ export default function LandingPage() {
             {/* Core Display Card */}
             <div className="w-full max-w-md bg-card border border-border rounded-large-card p-8 shadow-md text-center flex flex-col items-center gap-6">
               <div className="font-label font-semibold text-xs text-text-secondary uppercase tracking-wider">
-                Biology 101 • Card 4 of 24
+                Biology 101 / Card 4 of 24
               </div>
               <h3 className="font-heading font-bold text-xl text-text-primary leading-snug">
                 What is the primary function of the Mitochondria?

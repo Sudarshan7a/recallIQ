@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Shield,
@@ -6,20 +9,49 @@ import {
   Lightbulb,
   Info,
   TrendingDown,
+  Loader2,
 } from "lucide-react";
 
-function getMockCardsDue(): number {
-  return 542;
+function getMockCardsDue(): Promise<number> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(42), 450);
+  });
 }
 
 export default function DashboardPage() {
-  // Simulated backend data. Change this to > 100 to see the Overload State.
-  const cardsDue = getMockCardsDue();
+  const [cardsDue, setCardsDue] = useState<number | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getMockCardsDue()
+      .then(setCardsDue)
+      .catch(() => setError("Dashboard stats could not be loaded."));
+  }, []);
+
+  if (cardsDue === null) {
+    return (
+      <div className="p-6 md:p-10 max-w-[1440px] mx-auto animate-page-in">
+        <div className="rounded-large-card border border-border bg-card p-10 shadow-sm flex flex-col items-center justify-center min-h-[360px] text-center">
+          <Loader2 className="h-9 w-9 animate-spin text-primary mb-4" />
+          <h1 className="font-heading text-2xl font-bold">Loading dashboard</h1>
+          <p className="mt-2 text-sm text-text-secondary">
+            Pulling your mock review queue and activity.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const isEmpty = cardsDue === 0;
   const isOverloaded = cardsDue > 100;
 
   return (
-    <div className="p-6 md:p-10 max-w-[1440px] mx-auto space-y-8">
+    <div className="p-6 md:p-10 max-w-[1440px] mx-auto space-y-8 animate-page-in">
+      {error && (
+        <div className="rounded-card border border-error/20 bg-error-light p-4 text-sm text-error-dark">
+          {error}
+        </div>
+      )}
       {/* HEADER / GREETING */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -67,7 +99,7 @@ export default function DashboardPage() {
                   You&apos;re all caught up before you even started.
                 </p>
                 <Link
-                  href="/add-content"
+                  href="/study"
                   className="inline-flex items-center gap-2 bg-primary text-white hover:bg-primary-dark font-label font-bold px-6 py-3 rounded-card transition-colors shadow-sm"
                 >
                   Add first card <ArrowRight className="w-4 h-4" />

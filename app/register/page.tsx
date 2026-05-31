@@ -14,21 +14,28 @@ import {
   CheckCircle,
   Flame,
   ShieldAlert,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Simulate generation workflow block mapping to criteria rules
-    setTimeout(() => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 700));
       router.push("/onboarding");
-    }, 1000);
+    } catch {
+      setError("We could not create your mock account. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -134,6 +141,11 @@ export default function RegisterPage() {
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4">
+            {error && (
+              <div className="bg-error-light text-error border border-error/20 p-3 rounded-input text-xs font-body flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
+              </div>
+            )}
             {/* Identity Field Mapping Component */}
             <div className="space-y-1">
               <label
@@ -225,7 +237,8 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 className="w-full bg-primary hover:bg-primary-dark disabled:bg-primary/70 text-white font-label font-semibold text-sm py-3 px-4 rounded-card transition-all active:scale-[0.99] flex items-center justify-center gap-2 shadow-sm disabled:pointer-events-none"
               >
-                <span>{isLoading ? "Creating Account..." : "Sign Up"}</span>
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                <span>{isLoading ? "Creating account..." : "Sign Up"}</span>
               </button>
             </div>
           </form>
