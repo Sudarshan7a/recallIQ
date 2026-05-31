@@ -1,20 +1,47 @@
 @import "tailwindcss";
 
+/* 1. Define the dynamic values in standard CSS */
+@layer base {
+  :root {
+    /* Light Mode */
+    --tw-bg: #f8f8f6;
+    --tw-surface: #f8f8f6;
+    --tw-card: #ffffff;
+    --tw-text-primary: #1a1a18;
+    --tw-text-secondary: #888780;
+    --tw-border: #e5e5e2;
+    --tw-primary: #5c51e8;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      /* Dark Mode Overrides */
+      --tw-bg: #0f0f0e;
+      --tw-surface: #0f0f0e;
+      --tw-card: #1a1a18;
+      --tw-border: #2c2c2a;
+      --tw-text-primary: #f5f5f3;
+      --tw-primary: #7f77dd;
+    }
+  }
+}
+
+/* 2. Map Tailwind's theme to those dynamic variables */
 @theme {
   /* Layout & Surface Colors */
-  --color-background: #f8f8f6;
-  --color-surface: #f8f8f6;
-  --color-card: #ffffff;
-  --color-text-primary: #1a1a18;
+  --color-background: var(--tw-bg);
+  --color-surface: var(--tw-surface);
+  --color-card: var(--tw-card);
+  --color-text-primary: var(--tw-text-primary);
   --color-text-secondary: #888780;
-  --color-border: #e5e5e2;
+  --color-border: var(--tw-border);
 
-  /* Core Action Colors (Primary Indigo) */
-  --color-primary: #5c51e8;
+  /* Core Action Colors */
+  --color-primary: var(--tw-primary);
   --color-primary-light: #eeedfe;
   --color-primary-dark: #3c3489;
 
-  /* Feedback Colors (Success Teal & Warning Amber) */
+  /* Feedback Colors */
   --color-secondary: #1d9e75;
   --color-secondary-light: #e1f5ee;
   --color-secondary-dark: #085041;
@@ -23,7 +50,7 @@
   --color-tertiary-light: #faeeda;
   --color-tertiary-dark: #633806;
 
-  /* Error Colors (Danger Red) */
+  /* Error Colors */
   --color-error: #e24b4a;
   --color-error-light: #fcebeb;
   --color-error-dark: #791f1f;
@@ -35,10 +62,10 @@
   --font-label: var(--font-inter), sans-serif;
 
   /* Font Weights */
-  --font-weight-normal: 400; /* body text */
-  --font-weight-medium: 500; /* sub headlines */
-  --font-weight-semibold: 600; /* badges and labels */
-  --font-weight-bold: 700; /* main headlines */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 
   /* Border Radii Overrides */
   --radius-badge: 999px;
@@ -49,19 +76,7 @@
   --radius-pill: 999px;
 }
 
-/* System Dark Mode Context Overrides */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #0f0f0e;
-    --color-surface: #0f0f0e;
-    --color-card: #1a1a18;
-    --color-border: #2c2c2a;
-    --color-text-primary: #f5f5f3;
-    --color-primary: #7f77dd;
-  }
-}
-
-/* Reset base elements to utilize design tokens automatically */
+/* 3. Apply the base styles */
 @layer base {
   body {
     background-color: var(--color-background);
