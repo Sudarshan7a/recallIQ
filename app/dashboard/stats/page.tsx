@@ -41,7 +41,9 @@ export default function StatsPage() {
       <div className="p-6 md:p-10 max-w-[1440px] mx-auto animate-page-in">
         <div className="rounded-large-card border border-border bg-card p-10 shadow-sm flex min-h-[360px] flex-col items-center justify-center text-center">
           <Loader2 className="mb-4 h-9 w-9 animate-spin text-primary" />
-          <h1 className="font-heading text-2xl font-bold">Loading statistics</h1>
+          <h1 className="font-heading text-2xl font-bold">
+            Loading statistics
+          </h1>
           <p className="mt-2 text-sm text-text-secondary">
             Building your mock retention charts.
           </p>
@@ -254,12 +256,7 @@ export default function StatsPage() {
                       r="1.5"
                       className="fill-card stroke-primary stroke-2"
                     />
-                    <circle
-                      cx="100"
-                      cy="20"
-                      r="2.5"
-                      className="fill-primary"
-                    />
+                    <circle cx="100" cy="20" r="2.5" className="fill-primary" />
                   </svg>
                 </div>
                 <div className="absolute left-8 right-0 bottom-0 flex justify-between text-text-secondary font-label font-semibold text-[10px] pt-2">
