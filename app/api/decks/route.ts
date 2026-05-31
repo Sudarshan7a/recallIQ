@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { decks, cards } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/middleware";
-import { eq, and, count } from "drizzle-orm";
+import { eq, and, count, sql } from "drizzle-orm";
 
 // GET all decks for current user
 export async function GET(req: NextRequest) {
@@ -19,9 +19,13 @@ export async function GET(req: NextRequest) {
         description: decks.description,
         domain: decks.domain,
         createdAt: decks.createdAt,
+        cardCount: count(cards.id),
+        dueCount: sql<number>`count(${cards.id}) filter (where ${cards.dueDate} <= now())`,
       })
       .from(decks)
-      .where(eq(decks.userId, userId));
+      .leftJoin(cards, and(eq(cards.deckId, decks.id), eq(cards.userId, userId)))
+      .where(eq(decks.userId, userId))
+      .groupBy(decks.id);
 
     return NextResponse.json({ decks: userDecks });
   } catch (error) {

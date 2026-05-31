@@ -53,11 +53,15 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, description } = await req.json();
+    const { name, description, domain } = await req.json();
 
     const [deck] = await db
       .update(decks)
-      .set({ name, description })
+      .set({
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
+        ...(domain !== undefined && { domain }),
+      })
       .where(and(eq(decks.id, id), eq(decks.userId, userId)))
       .returning();
 

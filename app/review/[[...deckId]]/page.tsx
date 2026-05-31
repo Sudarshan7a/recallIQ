@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter, useParams } from "next/navigation";
 import {
   X,
   Clock,
@@ -16,545 +16,729 @@ import {
   Flame,
   Home,
   Settings,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { XPBar } from "@/components/ui/XPBar";
+import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Card {
+  id: string;
+  front: string;
+  back: string;
+  deckId: string;
+  importance?: string;
+}
+
+interface SessionResult {
+  cards: Card[];
+  count: number;
+  mode: string;
+}
+
+// Custom CountUp hook with ease-out quad animation
+function useCountUp(target: number, duration: number = 800) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (target === 0) return;
+    const startTime = performance.now();
+
+    function update(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = progress * (2 - progress);
+      setValue(Math.floor(ease * target));
+      if (progress < 1) requestAnimationFrame(update);
+    }
+
+    requestAnimationFrame(update);
+  }, [target, duration]);
+
+  return value;
+}
+
+// ─── Rating config ────────────────────────────────────────────────────────────
+
+const RATINGS = [
+  {
+    label: "Forgot",
+    value: 1,
+    index: 0,
+    shortcut: "1",
+    color: "text-[#E24B4A]",
+    border: "border-[#E24B4A]/40",
+    hover: "hover:bg-[#E24B4A]/10 hover:border-[#E24B4A]",
+    popupColor: "text-[#E24B4A]",
+    xp: 5,
+  },
+  {
+    label: "Hard",
+    value: 2,
+    index: 1,
+    shortcut: "2",
+    color: "text-[#BA7517]",
+    border: "border-[#BA7517]/40",
+    hover: "hover:bg-[#BA7517]/10 hover:border-[#BA7517]",
+    popupColor: "text-[#BA7517]",
+    xp: 8,
+  },
+  {
+    label: "Got it",
+    value: 3,
+    index: 2,
+    shortcut: "3",
+    color: "text-[#5C51E8]",
+    border: "border-[#5C51E8]/40",
+    hover: "hover:bg-[#5C51E8]/10 hover:border-[#5C51E8]",
+    popupColor: "text-[#5C51E8]",
+    xp: 10,
+  },
+  {
+    label: "Easy",
+    value: 4,
+    index: 3,
+    shortcut: "4",
+    color: "text-[#1D9E75]",
+    border: "border-[#1D9E75]/40",
+    hover: "hover:bg-[#1D9E75]/10 hover:border-[#1D9E75]",
+    popupColor: "text-[#1D9E75]",
+    xp: 15,
+  },
+] as const;
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ReviewSessionPage() {
   const router = useRouter();
+  const params = useParams();
 
-  // State Machine
+  // Derive deck id from route param (optional)
+  const deckId = Array.isArray(params?.deckId)
+    ? params.deckId[0]
+    : (params?.deckId as string | undefined);
+
+  // ── Session data (real) ────────────────────────────────────────────────────
+  const [cards, setCards] = useState<Card[]>([]);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  // ── UI State ───────────────────────────────────────────────────────────────
   const [isFlipped, setIsFlipped] = useState(false);
   const [sessionState, setSessionState] = useState<
     "active" | "paused" | "options" | "celebration" | "summary"
   >("active");
-  const [showXP, setShowXP] = useState(false);
+  const [popups, setPopups] = useState<
+    Array<{ id: number; amount: number; buttonIndex: number }>
+  >([]);
 
-  // Simulated Session Data
-  const [currentCardIndex, setCurrentCardIndex] = useState(14); // Set to 14 to test the last card state
-  const totalCards = 14;
-  const progressPercent = (currentCardIndex / totalCards) * 100;
+  // ── Session progress ───────────────────────────────────────────────────────
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [totalXP, setTotalXP] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [finalStreak, setFinalStreak] = useState(0);
 
-  // Handlers
-  const handleShowAnswer = () => setIsFlipped(true);
+  // ── Timer ──────────────────────────────────────────────────────────────────
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const handleRating = () => {
-    setShowXP(true);
+  // ─── Load session ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    const url = deckId
+      ? `/api/review/session?deck_id=${deckId}`
+      : "/api/review/session";
 
-    // If last card, trigger the multi-phase celebration sequence
-    if (currentCardIndex >= totalCards) {
-      setTimeout(() => {
-        setShowXP(false);
-        setSessionState("celebration"); // Phase B: Card slides out, bar turns teal
+    fetch(url, { credentials: "include" })
+      .then(async (res) => {
+        const data: SessionResult = await res.json();
+        if (!res.ok) throw new Error((data as any).error ?? "Failed to load session");
+        if (!data.cards || data.cards.length === 0) {
+          // No cards due — go directly to summary with zeros
+          setSessionState("summary");
+        }
+        setCards(data.cards ?? []);
+        setIsLoadingSession(false);
+      })
+      .catch((err) => {
+        setLoadError(err instanceof Error ? err.message : "Could not load session.");
+        setIsLoadingSession(false);
+      });
+  }, [deckId]);
 
-        setTimeout(() => {
-          setSessionState("summary"); // Phase C: Summary mounts
-        }, 600); // 600ms allows the card slide-out animation to finish
-      }, 200); // 200ms delay after tap
-    } else {
-      setTimeout(() => {
-        setShowXP(false);
-        setIsFlipped(false);
-        setCurrentCardIndex((prev) => prev + 1);
-      }, 800);
+  // ─── Start timer once loaded ───────────────────────────────────────────────
+  useEffect(() => {
+    if (isLoadingSession || sessionState !== "active") return;
+    timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isLoadingSession, sessionState]);
+
+  // ─── Confetti on completion ────────────────────────────────────────────────
+  useEffect(() => {
+    if (sessionState === "summary") {
+      confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } });
+      const t = setTimeout(() => {
+        confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
+      }, 300);
+      return () => clearTimeout(t);
     }
-  };
+  }, [sessionState]);
 
-  const handleClose = () => setSessionState("paused");
-  const handleLongPress = () => setSessionState("options");
+  // ─── Keyboard shortcuts ────────────────────────────────────────────────────
+  const handleRating = useCallback(
+    (rating: (typeof RATINGS)[number], skipAnimation = false) => {
+      if (!isFlipped || sessionState !== "active") return;
 
-  // ============================================================================
-  // VIEW: PHASE C - SESSION COMPLETE SUMMARY
-  // ============================================================================
+      const { index, xp: xpAmount, value } = rating;
+
+      // XP popup
+      const id = Date.now() + Math.random();
+      if (!skipAnimation) {
+        setPopups((prev) => [...prev, { id, amount: xpAmount, buttonIndex: index }]);
+        setTimeout(() => setPopups((prev) => prev.filter((p) => p.id !== id)), 900);
+      }
+
+      // Fire API in background (non-blocking)
+      const currentCard = cards[currentIndex];
+      if (currentCard) {
+        fetch("/api/review", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ card_id: currentCard.id, rating: value }),
+        })
+          .then(async (res) => {
+            if (res.ok) {
+              const data = await res.json();
+              if (data.streak) setFinalStreak(data.streak);
+            }
+          })
+          .catch(() => {/* silent — don't break UX */});
+      }
+
+      // Accumulate XP & accuracy
+      setTotalXP((prev) => prev + xpAmount);
+      if (value >= 3) setCorrectCount((prev) => prev + 1);
+
+      // Advance to next card or end session
+      const isLastCard = currentIndex >= cards.length - 1;
+      if (isLastCard) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        setTimeout(() => {
+          setSessionState("celebration");
+          setTimeout(() => setSessionState("summary"), 700);
+        }, 400);
+      } else {
+        setTimeout(() => {
+          setIsFlipped(false);
+          setCurrentIndex((prev) => prev + 1);
+        }, skipAnimation ? 0 : 700);
+      }
+    },
+    [isFlipped, sessionState, currentIndex, cards]
+  );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === " " && !isFlipped) {
+        e.preventDefault();
+        setIsFlipped(true);
+        return;
+      }
+      if (isFlipped) {
+        const r = RATINGS.find((r) => r.shortcut === e.key);
+        if (r) handleRating(r, true);
+      }
+      if (e.key === "Escape") setSessionState("paused");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isFlipped, handleRating]);
+
+  // ─── Derived values ────────────────────────────────────────────────────────
+  const totalCards = cards.length;
+  const progressPercent = totalCards > 0 ? (currentIndex / totalCards) * 100 : 0;
+  const currentCard = cards[currentIndex] ?? null;
+  const elapsedMin = Math.floor(elapsedSeconds / 60);
+  const elapsedSec = elapsedSeconds % 60;
+  const timeLabel = `${String(elapsedMin).padStart(2, "0")}:${String(elapsedSec).padStart(2, "0")}`;
+  const accuracyPct =
+    currentIndex > 0 ? Math.round((correctCount / currentIndex) * 100) : 0;
+
+  // ─── Count-up values for summary ──────────────────────────────────────────
+  const cardsReviewedVal = useCountUp(sessionState === "summary" ? totalCards : 0);
+  const correctVal = useCountUp(sessionState === "summary" ? correctCount : 0);
+  const xpEarnedVal = useCountUp(sessionState === "summary" ? totalXP : 0);
+  const streakVal = useCountUp(sessionState === "summary" ? (finalStreak || 1) : 0);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LOADING STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (isLoadingSession) {
+    return (
+      <div className="bg-[#0f0f0e] min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-[#5C51E8] animate-spin" />
+          <p className="text-[#888780] font-body text-sm">Loading your session…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="bg-[#0f0f0e] min-h-screen flex items-center justify-center px-6">
+        <div className="max-w-sm w-full bg-[#1a1a18] border border-[#2c2c2a] rounded-[16px] p-8 flex flex-col items-center text-center gap-4">
+          <AlertTriangle className="w-10 h-10 text-[#E24B4A]" />
+          <h2 className="font-heading font-bold text-xl text-[#f5f5f3]">Session error</h2>
+          <p className="font-body text-sm text-[#888780]">{loadError}</p>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="w-full bg-[#5C51E8] text-white py-2.5 rounded-[12px] font-label font-semibold text-sm hover:bg-[#3c3489] transition-colors cursor-pointer"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SUMMARY VIEW
+  // ═══════════════════════════════════════════════════════════════════════════
+
   if (sessionState === "summary") {
     return (
-      <div className="bg-background min-h-screen text-text-primary font-body antialiased flex flex-col items-center py-12 px-6 relative overflow-hidden">
-        {/* CSS Confetti Overlay (Implementation in globals.css) */}
-        <div
-          className="absolute inset-0 pointer-events-none confetti-overlay z-0"
-          aria-hidden="true"
-        />
+      <div className="bg-[#0f0f0e] min-h-screen text-[#f5f5f3] font-body antialiased flex flex-col items-center py-12 px-6 relative overflow-hidden">
+        {/* CSS Confetti Overlay */}
+        <div className="absolute inset-0 pointer-events-none confetti-overlay z-0" aria-hidden="true" />
 
         <header className="w-full max-w-2xl flex justify-between items-center mb-8 relative z-10">
           <button
             onClick={() => router.push("/dashboard")}
-            className="p-2 rounded-full hover:bg-card transition-colors text-text-secondary"
+            className="p-2 rounded-full hover:bg-[#1a1a18] transition-colors text-[#888780] cursor-pointer"
           >
             <X className="w-6 h-6" />
           </button>
-          <h1 className="font-heading font-bold text-xl text-primary">
-            Study Session
-          </h1>
+          <h1 className="font-heading font-bold text-xl text-[#5C51E8]">Study Session</h1>
           <div className="w-10" />
         </header>
 
         <main className="w-full max-w-md flex flex-col items-center relative z-10 animate-in slide-in-from-bottom-8 duration-500">
+          {/* Hero */}
           <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mb-4 shadow-sm animate-in zoom-in-50 duration-500 delay-150">
+            <motion.div
+              initial={{ scale: 0, rotate: -20 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
+              className="w-20 h-20 bg-[#1D9E75] rounded-full flex items-center justify-center mb-4 shadow-lg shadow-[#1D9E75]/20"
+            >
               <Check className="w-10 h-10 text-white" strokeWidth={3} />
-            </div>
-            <h2 className="font-heading font-bold text-4xl text-text-primary mb-2 leading-tight">
-              Session complete!
+            </motion.div>
+            <h2 className="font-heading font-bold text-4xl text-[#f5f5f3] mb-2 leading-tight">
+              {totalCards === 0 ? "All caught up!" : "Session complete!"}
             </h2>
-            <p className="font-body font-normal text-lg text-text-secondary">
-              Your memory just got stronger.
+            <p className="font-body text-lg text-[#888780]">
+              {totalCards === 0 ? "No cards are due right now." : "Your memory just got stronger."}
             </p>
           </div>
 
-          <div className="bg-primary-light/50 border border-primary/20 rounded-pill px-6 py-2 flex items-center gap-2 mb-8 shadow-sm">
-            <Flame className="w-5 h-5 text-primary fill-primary" />
-            <span className="font-label font-bold text-sm text-primary">
-              12 day streak maintained!
+          {/* Streak pill */}
+          <div className="bg-[#1D9E75]/10 border border-[#1D9E75]/20 rounded-full px-6 py-2 flex items-center gap-2 mb-8 shadow-sm">
+            <Flame className="w-5 h-5 text-[#1D9E75] fill-[#1D9E75]" />
+            <span className="font-label font-bold text-sm text-[#1D9E75]">
+              {streakVal} day streak maintained!
             </span>
           </div>
 
-          <div className="bg-card border border-border rounded-large-card w-full p-6 shadow-sm mb-6">
+          {/* Stats grid */}
+          <div className="bg-[#1a1a18] border border-[#2c2c2a] rounded-[16px] w-full p-6 shadow-sm mb-6">
             <div className="grid grid-cols-2 gap-y-6 relative">
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border/50 -translate-x-1/2" />
-              <div className="absolute top-1/2 left-0 right-0 h-px bg-border/50 -translate-y-1/2" />
+              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#2c2c2a] -translate-x-1/2" />
+              <div className="absolute top-1/2 left-0 right-0 h-px bg-[#2c2c2a] -translate-y-1/2" />
 
               <div className="flex flex-col items-center pr-4 pb-4">
-                <span className="font-heading font-bold text-2xl text-text-primary">
-                  14
-                </span>
-                <span className="font-label font-semibold text-xs text-text-secondary uppercase tracking-wider mt-1">
-                  Cards reviewed
-                </span>
+                <span className="font-heading font-bold text-2xl text-[#f5f5f3]">{cardsReviewedVal}</span>
+                <span className="font-label font-semibold text-xs text-[#888780] uppercase tracking-wider mt-1">Cards reviewed</span>
               </div>
               <div className="flex flex-col items-center pl-4 pb-4">
-                <span className="font-heading font-bold text-2xl text-secondary">
-                  11
-                </span>
-                <span className="font-label font-semibold text-xs text-text-secondary uppercase tracking-wider text-center mt-1">
-                  Correct first try
-                </span>
+                <span className="font-heading font-bold text-2xl text-[#1D9E75]">{correctVal}</span>
+                <span className="font-label font-semibold text-xs text-[#888780] uppercase tracking-wider text-center mt-1">Correct first try</span>
               </div>
               <div className="flex flex-col items-center pr-4 pt-4">
-                <span className="font-heading font-bold text-2xl text-primary">
-                  +140
-                </span>
-                <span className="font-label font-semibold text-xs text-text-secondary uppercase tracking-wider mt-1">
-                  XP Earned
-                </span>
+                <span className="font-heading font-bold text-2xl text-[#5C51E8]">+{xpEarnedVal}</span>
+                <span className="font-label font-semibold text-xs text-[#888780] uppercase tracking-wider mt-1">XP Earned</span>
               </div>
               <div className="flex flex-col items-center pl-4 pt-4">
-                <span className="font-heading font-bold text-2xl text-text-primary">
-                  8m
-                </span>
-                <span className="font-label font-semibold text-xs text-text-secondary uppercase tracking-wider mt-1">
-                  Time spent
-                </span>
+                <span className="font-heading font-bold text-2xl text-[#f5f5f3]">{timeLabel}</span>
+                <span className="font-label font-semibold text-xs text-[#888780] uppercase tracking-wider mt-1">Time spent</span>
               </div>
             </div>
-            <div className="mt-8 pt-6 border-t border-border/50">
-              <XPBar
-                currentXP={420}
-                targetXP={500}
-                size="standard"
-                state="normal"
-              />
+
+            <div className="mt-8 pt-6 border-t border-[#2c2c2a]">
+              <XPBar currentXP={xpEarnedVal} targetXP={500} size="standard" state="normal" />
             </div>
           </div>
 
+          {/* CTA */}
           <div className="w-full flex flex-col gap-3 mb-8">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => router.push("/dashboard")}
-              className="w-full h-12 bg-primary text-white rounded-card font-label font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary-dark active:scale-95 transition-all shadow-sm"
+              className="w-full h-12 bg-[#5C51E8] text-white rounded-[12px] font-label font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#3c3489] transition-all shadow-md shadow-[#5C51E8]/10 cursor-pointer"
             >
               <Home className="w-4 h-4 mr-2" /> Return to Dashboard
-            </button>
+            </motion.button>
           </div>
         </main>
       </div>
     );
   }
 
-  // ============================================================================
-  // VIEW: STANDARD REVIEW ARENA (Desktop 3-Column & Mobile View)
-  // ============================================================================
+  // ═══════════════════════════════════════════════════════════════════════════
+  // REVIEW ARENA
+  // ═══════════════════════════════════════════════════════════════════════════
+
   return (
-    <div className="bg-background min-h-screen text-text-primary font-body antialiased flex flex-col items-center select-none overflow-hidden">
-      {/* 1. TOP HEADER & DYNAMIC PROGRESS BAR */}
-      <header className="sticky top-0 bg-background/90 backdrop-blur-sm flex justify-between items-center w-full max-w-6xl mx-auto px-4 lg:px-8 h-16 pt-2 md:pt-4 z-40 border-b border-border/50">
+    <div className="bg-[#0f0f0e] min-h-screen text-[#f5f5f3] font-body antialiased flex flex-col items-center select-none overflow-hidden">
+
+      {/* ─── HEADER ─────────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 bg-[#0f0f0e]/95 backdrop-blur-sm flex justify-between items-center w-full max-w-6xl mx-auto px-4 lg:px-8 h-16 pt-2 md:pt-4 z-40 border-b border-[#2c2c2a]">
         <div className="flex items-center gap-4">
           <button
-            onClick={handleClose}
-            className="p-2 -ml-2 rounded-full hover:bg-card transition-colors text-text-secondary"
+            onClick={() => setSessionState("paused")}
+            className="p-2 -ml-2 rounded-full hover:bg-[#1a1a18] transition-colors text-[#888780] cursor-pointer"
           >
             <X className="w-6 h-6" />
           </button>
-          <span className="hidden lg:block font-label font-semibold text-sm text-text-secondary">
-            Exit Session
-          </span>
+          <span className="hidden lg:block font-label font-semibold text-sm text-[#888780]">Exit Session</span>
         </div>
 
-        {/* Desktop Centered Progress Bar */}
+        {/* Desktop progress bar */}
         <div className="hidden lg:flex items-center justify-center flex-1 max-w-md mx-8">
-          <div className="w-full h-2 bg-border/50 rounded-pill relative overflow-hidden">
+          <div className="w-full h-2 bg-[#2c2c2a] rounded-full relative overflow-hidden">
             <div
-              className={`absolute top-0 left-0 h-full rounded-pill transition-all duration-500 ease-out ${sessionState === "celebration" ? "bg-secondary shadow-[0_0_8px_rgba(29,158,117,0.6)]" : "bg-primary"}`}
+              className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ease-out ${
+                sessionState === "celebration" ? "bg-[#1D9E75] shadow-[0_0_8px_rgba(29,158,117,0.6)]" : "bg-[#5C51E8]"
+              }`}
               style={{ width: `${progressPercent}%` }}
             />
           </div>
         </div>
 
-        {/* Mobile Title */}
-        <div className="lg:hidden font-heading font-bold text-lg tabular-nums text-text-primary">
-          {currentCardIndex} / {totalCards}
+        {/* Mobile counter */}
+        <div className="lg:hidden font-heading font-bold text-lg tabular-nums text-[#f5f5f3]">
+          {currentIndex} / {totalCards}
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-text-secondary bg-card px-3 py-1.5 rounded-pill border border-border">
+          <div className="flex items-center gap-1.5 text-[#888780] bg-[#1a1a18] px-3 py-1.5 rounded-full border border-[#2c2c2a]">
             <Clock className="w-4 h-4" />
-            <span className="font-label font-semibold text-xs tabular-nums">
-              08:14
-            </span>
+            <span className="font-label font-semibold text-xs tabular-nums">{timeLabel}</span>
           </div>
-          <button className="hidden lg:block p-2 text-text-secondary hover:bg-card rounded-full transition-colors">
+          <button className="hidden lg:block p-2 text-[#888780] hover:bg-[#1a1a18] rounded-full transition-colors cursor-pointer">
             <Settings className="w-5 h-5" />
           </button>
         </div>
       </header>
 
-      {/* Mobile Progress Bar (Hidden on Desktop) */}
-      <div className="w-full h-1 bg-border/50 lg:hidden">
+      {/* Mobile progress bar */}
+      <div className="w-full h-1 bg-[#2c2c2a] lg:hidden">
         <div
-          className={`h-full transition-all duration-500 ease-out rounded-r-pill ${sessionState === "celebration" ? "bg-secondary shadow-[0_0_8px_rgba(29,158,117,0.6)]" : "bg-primary"}`}
+          className={`h-full transition-all duration-500 ease-out rounded-r-full ${
+            sessionState === "celebration" ? "bg-[#1D9E75]" : "bg-[#5C51E8]"
+          }`}
           style={{ width: `${progressPercent}%` }}
         />
       </div>
 
+      {/* ─── BODY ───────────────────────────────────────────────────────────── */}
       <div className="flex-1 w-full max-w-6xl mx-auto flex flex-row justify-center items-stretch gap-8 lg:p-8 relative">
-        {/* LEFT COLUMN: Desktop Stats */}
+
+        {/* LEFT: Session stats */}
         <aside className="hidden lg:flex w-56 flex-col gap-6 pt-4 shrink-0">
-          <h4 className="font-label font-semibold text-xs text-text-secondary uppercase tracking-wider">
-            Session Progress
-          </h4>
+          <h4 className="font-label font-semibold text-xs text-[#888780] uppercase tracking-wider">Session Progress</h4>
           <div className="space-y-4">
             <div>
-              <div className="font-label text-xs text-text-secondary mb-1">
-                Cards Done
-              </div>
-              <div className="font-heading font-bold text-4xl text-text-primary">
-                {currentCardIndex}
-              </div>
+              <div className="font-label text-xs text-[#888780] mb-1">Cards Done</div>
+              <div className="font-heading font-bold text-4xl text-[#f5f5f3] tabular-nums">{currentIndex}</div>
             </div>
             <div>
-              <div className="font-label text-xs text-text-secondary mb-1">
-                Remaining
-              </div>
-              <div className="font-heading font-bold text-3xl text-text-secondary">
-                {totalCards - currentCardIndex}
-              </div>
+              <div className="font-label text-xs text-[#888780] mb-1">Remaining</div>
+              <div className="font-heading font-bold text-3xl text-[#888780] tabular-nums">{totalCards - currentIndex}</div>
             </div>
-            <div className="pt-4 border-t border-border">
-              <div className="font-label text-xs text-text-secondary mb-1">
-                Accuracy
-              </div>
-              <div className="font-heading font-bold text-3xl text-secondary">
-                94%
-              </div>
+            <div className="pt-4 border-t border-[#2c2c2a]">
+              <div className="font-label text-xs text-[#888780] mb-1">Accuracy</div>
+              <div className="font-heading font-bold text-3xl text-[#1D9E75] tabular-nums">{accuracyPct}%</div>
             </div>
           </div>
         </aside>
 
-        {/* CENTER COLUMN: Arena */}
+        {/* CENTER: Card arena */}
         <main className="flex-1 w-full max-w-[550px] px-4 lg:px-0 flex flex-col pt-6 pb-8 relative z-10 overflow-hidden">
-          <div className="flex items-center gap-2 mb-4 text-text-secondary justify-center">
+
+          {/* Deck label */}
+          <div className="flex items-center gap-2 mb-4 text-[#888780] justify-center">
             <Folder className="w-4 h-4" />
             <span className="font-label font-semibold text-xs uppercase tracking-wider">
-              CS / Engineering
+              {currentCard?.importance === "core" ? "Core" : "Review"}
             </span>
           </div>
 
-          {/* Phase B: Celebration Overlay (XP + Success Icon) */}
+          {/* Celebration overlay */}
           <div
-            className={`absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none transition-all duration-500 ${sessionState === "celebration" ? "opacity-100 -translate-y-4" : "opacity-0 translate-y-4"}`}
+            className={`absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none transition-all duration-500 ${
+              sessionState === "celebration" ? "opacity-100 -translate-y-4" : "opacity-0 translate-y-4"
+            }`}
           >
-            <Check className="w-16 h-16 text-secondary bg-secondary-light rounded-full p-2 mb-4 shadow-lg" />
-            <h2 className="font-heading font-bold text-3xl text-secondary tracking-tight">
-              +140 XP Total!
+            <Check className="w-16 h-16 text-[#1D9E75] bg-[#1D9E75]/10 border border-[#1D9E75]/35 rounded-full p-2 mb-4 shadow-lg" />
+            <h2 className="font-heading font-bold text-3xl text-[#1D9E75] tracking-tight">
+              +{totalXP} XP Total!
             </h2>
           </div>
 
-          {/* The Card Element */}
-          <article
-            onContextMenu={(e) => {
-              e.preventDefault();
-              handleLongPress();
-            }}
-            className={`flex-1 bg-card rounded-large-card border shadow-sm p-6 lg:p-10 flex flex-col relative mb-8 transition-all duration-500 ease-in-out ${
-              isFlipped
-                ? "border-t-4 border-t-primary border-x-border border-b-border bg-secondary-light/30"
-                : "border-border hover:shadow-md cursor-pointer"
-            } ${sessionState === "celebration" ? "translate-x-[120%] opacity-0 rotate-6" : "translate-x-0 opacity-100"}`}
-            onClick={!isFlipped ? handleShowAnswer : undefined}
+          {/* ─── FLASHCARD ────────────────────────────────────────────────── */}
+          <div
+            className={`flex-1 w-full mb-8 relative select-none cursor-pointer ${
+              sessionState === "celebration"
+                ? "transition-all duration-500 translate-x-[120%] opacity-0 rotate-6"
+                : ""
+            }`}
+            style={{ perspective: "1000px", minHeight: "280px" }}
+            onClick={!isFlipped ? () => setIsFlipped(true) : undefined}
+            onContextMenu={(e) => { e.preventDefault(); setSessionState("options"); }}
           >
-            <div className="absolute top-5 right-5 bg-primary-light text-primary font-label font-bold text-[10px] px-2 py-1 rounded-sm uppercase tracking-wider">
-              CORE
-            </div>
+            <motion.div
+              animate={{ rotateY: isFlipped ? 180 : 0 }}
+              transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+              className="relative w-full h-full"
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              {/* FRONT */}
+              <div
+                className="absolute inset-0 bg-[#18181b] rounded-[16px] border border-[#2c2c2a] shadow-[0_8px_32px_rgba(0,0,0,0.4)] p-6 lg:p-10 flex flex-col justify-between hover:border-[#3c3c3a] transition-all duration-200"
+                style={{ backfaceVisibility: "hidden" }}
+              >
+                <div className="absolute top-5 right-5 bg-[#5C51E8]/10 text-[#5C51E8] font-label font-bold text-[9px] px-2 py-0.5 rounded border border-[#5C51E8]/20 uppercase tracking-widest">
+                  {currentIndex + 1}/{totalCards}
+                </div>
 
-            {!isFlipped ? (
-              <>
                 <div className="flex-1 flex items-center justify-center text-center mt-6">
-                  <h2 className="font-heading font-bold text-2xl text-text-primary leading-tight">
-                    Explain the time complexity of QuickSort in the worst case.
+                  <h2 className="font-sans font-semibold text-xl text-[#f5f5f3] leading-snug">
+                    {currentCard?.front ?? "No cards due"}
                   </h2>
                 </div>
-                <div className="mt-8 pt-6 border-t border-dashed border-border text-center flex flex-col items-center gap-2 opacity-60">
-                  <p className="font-body font-normal text-sm text-text-secondary">
-                    Think about it before revealing
-                  </p>
-                  <div className="flex items-center gap-2 text-text-secondary mt-1">
-                    <Touchpad className="w-5 h-5" />
-                    <span className="font-label font-semibold text-xs uppercase tracking-wider">
-                      Tap card to flip
-                    </span>
+
+                <div className="mt-8 pt-6 border-t border-dashed border-[#2c2c2a] text-center flex flex-col items-center gap-1.5 opacity-70">
+                  <p className="font-sans text-xs text-[#888780]">Think about it before revealing</p>
+                  <div className="flex items-center gap-1.5 text-[#888780] mt-0.5">
+                    <Touchpad className="w-4 h-4" />
+                    <span className="font-sans font-semibold text-[9px] uppercase tracking-widest">Tap to reveal · Space</span>
                   </div>
                 </div>
-              </>
-            ) : (
-              <>
-                <header className="mb-6">
-                  <span className="font-label font-bold text-xs text-secondary tracking-widest uppercase bg-secondary-light px-2 py-1 rounded">
+              </div>
+
+              {/* BACK */}
+              <div
+                className="absolute inset-0 bg-[#18181b] rounded-[16px] border border-[#2c2c2a] shadow-[0_8px_32px_rgba(0,0,0,0.4)] p-6 lg:p-10 flex flex-col justify-between hover:border-[#3c3c3a] transition-all duration-200"
+                style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+              >
+                <header className="flex justify-between items-start">
+                  <span className="font-label font-bold text-[9px] text-[#1D9E75] tracking-widest uppercase bg-[#1D9E75]/10 border border-[#1D9E75]/20 px-2 py-0.5 rounded">
                     Answer
                   </span>
+                  <div className="bg-[#5C51E8]/10 text-[#5C51E8] font-label font-bold text-[9px] px-2 py-0.5 rounded border border-[#5C51E8]/20 uppercase tracking-widest">
+                    {currentIndex + 1}/{totalCards}
+                  </div>
                 </header>
-                <div className="mb-6">
-                  <p className="font-body font-normal text-sm text-text-secondary italic line-clamp-2">
-                    Explain the time complexity of QuickSort in the worst case.
+
+                <div className="my-auto py-4">
+                  <p className="font-sans text-xs text-[#888780] italic line-clamp-2 mb-3 text-center">
+                    {currentCard?.front}
                   </p>
-                </div>
-                <div className="flex-1 flex items-center justify-center">
-                  <h3 className="font-heading font-bold text-4xl text-text-primary text-center">
-                    O(n^2)
+                  <h3 className="font-sans font-bold text-3xl text-[#f5f5f3] text-center leading-snug">
+                    {currentCard?.back}
                   </h3>
                 </div>
-                <div className="mt-auto border-t border-border/50 pt-6">
-                  <p className="font-body font-normal text-sm text-text-secondary text-center leading-relaxed">
-                    This occurs when the pivot chosen is consistently the
-                    greatest or smallest element, leading to highly unbalanced
-                    partitions.
+
+                <div className="mt-auto border-t border-[#2c2c2a] pt-4">
+                  <p className="font-sans text-xs text-[#888780] text-center">
+                    How well did you remember this?
                   </p>
                 </div>
-              </>
-            )}
-          </article>
+              </div>
+            </motion.div>
+          </div>
 
-          {/* ACTION CONTROLS */}
+          {/* ─── ACTION CONTROLS ──────────────────────────────────────────── */}
           <div
-            className={`mt-auto relative transition-opacity duration-300 ${sessionState === "celebration" ? "opacity-0" : "opacity-100"}`}
+            className={`mt-auto relative transition-opacity duration-300 ${
+              sessionState === "celebration" ? "opacity-0" : "opacity-100"
+            }`}
           >
             {!isFlipped ? (
-              <div className="flex flex-col items-center">
-                <button
-                  onClick={handleShowAnswer}
-                  className="w-full bg-card border border-border rounded-card py-4 flex items-center justify-center gap-2 hover:bg-background transition-colors shadow-sm active:scale-[0.98]"
-                >
-                  <Eye className="w-5 h-5 text-text-primary" />
-                  <span className="font-label font-bold text-sm text-text-primary">
-                    Show answer
-                  </span>
-                </button>
-              </div>
+              /* Show Answer Button */
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => setIsFlipped(true)}
+                className="w-full bg-[#1a1a18] border border-[#2c2c2a] rounded-[12px] py-3.5 flex items-center justify-center gap-2 hover:bg-[#222220] transition-colors shadow-sm cursor-pointer text-[#f5f5f3]"
+              >
+                <Eye className="w-4 h-4 text-[#888780]" />
+                <span className="font-sans font-semibold text-sm">Show answer</span>
+                <kbd className="ml-2 px-1.5 py-0.5 bg-[#0f0f0e] rounded border border-[#2c2c2a] font-label text-[9px] text-[#888780] tracking-wide">
+                  Space
+                </kbd>
+              </motion.button>
             ) : (
-              <div className="grid grid-cols-4 gap-2 sm:gap-4">
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={handleRating}
-                    className="w-full h-14 bg-card border border-error text-error hover:bg-error-light/50 rounded-input flex items-center justify-center font-label font-bold text-lg transition-colors active:scale-95"
-                  >
-                    1
-                  </button>
-                  <span className="font-label font-semibold text-[10px] text-text-secondary mt-2 text-center uppercase tracking-wider">
-                    Forgot
-                  </span>
-                </div>
+              /* Rating pills — Forgot / Hard / Got it / Easy */
+              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                {RATINGS.map((rating) => (
+                  <div key={rating.label} className="flex flex-col items-center relative">
+                    {/* XP popup */}
+                    <AnimatePresence>
+                      {popups
+                        .filter((p) => p.buttonIndex === rating.index)
+                        .map((p) => (
+                          <motion.div
+                            key={p.id}
+                            initial={{ opacity: 0, y: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, y: -42, scale: 1.05 }}
+                            exit={{ opacity: 0, y: -62 }}
+                            transition={{ duration: 0.5, ease: "easeOut" }}
+                            className={`absolute -top-6 font-label font-extrabold text-[10px] uppercase tracking-widest pointer-events-none drop-shadow-sm z-30 ${rating.popupColor}`}
+                          >
+                            +{p.amount} XP
+                          </motion.div>
+                        ))}
+                    </AnimatePresence>
 
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={handleRating}
-                    className="w-full h-14 bg-card border border-tertiary text-tertiary hover:bg-tertiary-light/50 rounded-input flex items-center justify-center font-label font-bold text-lg transition-colors active:scale-95"
-                  >
-                    2
-                  </button>
-                  <span className="font-label font-semibold text-[10px] text-text-secondary mt-2 text-center uppercase tracking-wider">
-                    Hard
-                  </span>
-                </div>
+                    <motion.button
+                      whileHover={{ scale: 1.04, y: -2 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => handleRating(rating)}
+                      className={`w-full py-3 rounded-[10px] bg-[#18181b] border font-label font-bold text-sm transition-all shadow-sm cursor-pointer ${rating.color} ${rating.border} ${rating.hover}`}
+                    >
+                      {rating.label}
+                    </motion.button>
 
-                <div className="flex flex-col items-center relative">
-                  <div
-                    className={`absolute -top-8 left-1/2 -translate-x-1/2 text-primary font-heading font-bold text-lg whitespace-nowrap z-10 transition-all duration-700 ease-out ${showXP ? "opacity-100 -translate-y-4" : "opacity-0 translate-y-0"}`}
-                  >
-                    +10 XP
+                    {/* Keyboard shortcut hint */}
+                    <kbd className="mt-1.5 px-1.5 py-0.5 bg-[#0f0f0e] rounded border border-[#2c2c2a] font-label text-[8px] text-[#888780] tracking-wide">
+                      {rating.shortcut}
+                    </kbd>
                   </div>
-                  <button
-                    onClick={handleRating}
-                    className="w-full h-14 bg-primary text-white hover:bg-primary-dark rounded-input flex items-center justify-center font-label font-bold text-lg transition-colors active:scale-[0.95] shadow-sm"
-                  >
-                    3
-                  </button>
-                  <span className="font-label font-bold text-[10px] text-primary mt-2 text-center uppercase tracking-wider">
-                    Got it
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={handleRating}
-                    className="w-full h-14 bg-card border border-secondary text-secondary hover:bg-secondary-light/50 rounded-input flex items-center justify-center font-label font-bold text-lg transition-colors active:scale-95"
-                  >
-                    4
-                  </button>
-                  <span className="font-label font-semibold text-[10px] text-text-secondary mt-2 text-center uppercase tracking-wider">
-                    Easy
-                  </span>
-                </div>
+                ))}
               </div>
             )}
           </div>
         </main>
 
-        {/* RIGHT COLUMN: Desktop Keyboard Shortcuts */}
+        {/* RIGHT: Keyboard shortcuts */}
         <aside className="hidden lg:flex w-56 flex-col gap-6 pt-4 shrink-0">
-          <h4 className="font-label font-semibold text-xs text-text-secondary uppercase tracking-wider">
-            Keyboard Shortcuts
-          </h4>
-          <div className="bg-card p-4 rounded-card border border-border space-y-3">
+          <h4 className="font-label font-semibold text-xs text-[#888780] uppercase tracking-wider">Keyboard</h4>
+          <div className="bg-[#18181b] p-4 rounded-[12px] border border-[#2c2c2a] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="font-body font-normal text-sm text-text-primary">
-                Show Answer
-              </span>
-              <kbd className="px-2 py-1 bg-background rounded border border-border font-label font-semibold text-[10px] text-text-secondary shadow-sm">
-                Space
-              </kbd>
+              <span className="font-sans text-xs text-[#f5f5f3]">Show Answer</span>
+              <kbd className="px-2 py-0.5 bg-[#09090b] rounded border border-[#2c2c2a] font-label font-semibold text-[9px] text-[#888780] shadow-sm">Space</kbd>
             </div>
-            <div className="h-px bg-border/50 my-2" />
-            <div className="flex items-center justify-between">
-              <span className="font-body font-normal text-sm text-error">
-                Again
-              </span>
-              <kbd className="px-2 py-1 bg-background rounded border border-border font-label font-semibold text-[10px] text-text-secondary shadow-sm">
-                1
-              </kbd>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-body font-normal text-sm text-text-primary">
-                Hard
-              </span>
-              <kbd className="px-2 py-1 bg-background rounded border border-border font-label font-semibold text-[10px] text-text-secondary shadow-sm">
-                2
-              </kbd>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-body font-normal text-sm text-text-primary">
-                Good
-              </span>
-              <kbd className="px-2 py-1 bg-background rounded border border-border font-label font-semibold text-[10px] text-text-secondary shadow-sm">
-                3
-              </kbd>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-body font-normal text-sm text-primary">
-                Easy
-              </span>
-              <kbd className="px-2 py-1 bg-background rounded border border-border font-label font-semibold text-[10px] text-text-secondary shadow-sm">
-                4
-              </kbd>
-            </div>
+            <div className="h-px bg-[#2c2c2a] my-2" />
+            {RATINGS.map((r) => (
+              <div key={r.label} className="flex items-center justify-between">
+                <span className={`font-sans text-xs ${r.color}`}>{r.label}</span>
+                <kbd className="px-2 py-0.5 bg-[#09090b] rounded border border-[#2c2c2a] font-label font-semibold text-[9px] text-[#888780] shadow-sm">{r.shortcut}</kbd>
+              </div>
+            ))}
           </div>
         </aside>
       </div>
 
-      {/* ========================================== */}
-      {/* OVERLAYS & MODALS                          */}
-      {/* ========================================== */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* OVERLAYS                                                           */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
 
       {(sessionState === "paused" || sessionState === "options") && (
         <div
-          className="fixed inset-0 bg-text-primary/40 z-50 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-black/70 z-50 backdrop-blur-sm transition-opacity"
           onClick={() => setSessionState("active")}
         />
       )}
 
-      {/* PHASE A: Abandoned Confirmation Dialog */}
+      {/* Pause dialog */}
       {sessionState === "paused" && (
-        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[340px] bg-card/90 backdrop-blur-md border border-border rounded-large-card shadow-lg z-50 flex flex-col items-center p-6 animate-in fade-in zoom-in-95 duration-200">
-          <div className="w-14 h-14 rounded-full bg-primary-light flex items-center justify-center mb-4">
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[320px] bg-[#18181b] border border-[#2c2c2a] rounded-[16px] shadow-[0_12px_40px_rgba(0,0,0,0.5)] z-50 flex flex-col items-center p-6 animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-12 h-12 rounded-full bg-[#1a1a18] flex items-center justify-center mb-4 border border-[#2c2c2a]">
             <div className="flex gap-1.5">
-              <div className="w-1.5 h-5 bg-primary rounded-sm" />
-              <div className="w-1.5 h-5 bg-primary rounded-sm" />
+              <div className="w-1.5 h-4 bg-[#888780] rounded-sm" />
+              <div className="w-1.5 h-4 bg-[#888780] rounded-sm" />
             </div>
           </div>
-          <h3 className="font-heading font-bold text-xl text-text-primary mb-2">
-            Take a break?
-          </h3>
-          <p className="font-body font-normal text-xs text-text-secondary text-center mb-6 leading-relaxed">
-            You&apos;ve reviewed {currentCardIndex} cards so far. Your progress
-            is saved, but momentum matters.
+          <h3 className="font-heading font-bold text-lg text-[#f5f5f3] mb-1.5">Take a break?</h3>
+          <p className="font-body text-xs text-[#888780] text-center mb-6 leading-relaxed">
+            You&apos;ve reviewed {currentIndex} cards so far. Your progress is saved, but momentum matters.
           </p>
 
-          <div className="w-full space-y-3">
-            <button
+          <div className="w-full space-y-2.5">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => setSessionState("active")}
-              className="w-full bg-primary text-white rounded-input py-3 font-label font-bold text-sm hover:bg-primary-dark active:scale-95 transition-all"
+              className="w-full bg-[#f5f5f3] text-[#0f0f0e] rounded-[10px] py-2.5 font-label font-semibold text-sm hover:bg-white transition-all cursor-pointer"
             >
               Resume session
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => router.push("/dashboard")}
-              className="w-full bg-transparent border border-primary text-primary rounded-input py-3 font-label font-bold text-sm active:scale-95 transition-transform hover:bg-primary-light/50"
+              className="w-full bg-transparent border border-[#2c2c2a] text-[#888780] rounded-[10px] py-2.5 font-label font-semibold text-sm hover:bg-[#1a1a18] transition-all cursor-pointer"
             >
-              Save & exit
-            </button>
+              Save &amp; exit
+            </motion.button>
           </div>
         </div>
       )}
 
-      {/* Card Options Bottom Sheet */}
+      {/* Card options bottom sheet */}
       {sessionState === "options" && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] bg-card rounded-t-large-card z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.12)] flex flex-col animate-in slide-in-from-bottom-full duration-300">
-          <div className="flex flex-col items-center pt-4 pb-6 px-6">
-            <div className="w-12 h-1 bg-border rounded-pill mb-4" />
-            <h3 className="font-label font-bold text-sm text-text-primary w-full text-left">
-              Card options
-            </h3>
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-[#18181b] border-t border-[#2c2c2a] rounded-t-[16px] z-50 shadow-[0_-8px_32px_rgba(0,0,0,0.5)] flex flex-col animate-in slide-in-from-bottom-full duration-300">
+          <div className="flex flex-col items-center pt-4 pb-4 px-6">
+            <div className="w-10 h-1 bg-[#2c2c2a] rounded-full mb-3" />
+            <h3 className="font-label font-bold text-xs text-[#f5f5f3] w-full text-left uppercase tracking-widest">Card options</h3>
           </div>
 
           <div className="flex flex-col w-full pb-2">
-            <button className="w-full flex items-center px-6 py-4 hover:bg-background transition-colors text-left group">
-              <Flag className="w-5 h-5 text-primary mr-4" />
-              <span className="font-label font-semibold text-sm text-text-primary flex-1">
-                Mark as Core
-              </span>
+            <button className="w-full flex items-center px-6 py-3.5 hover:bg-[#1a1a18] transition-colors text-left cursor-pointer">
+              <Flag className="w-4 h-4 text-[#5C51E8] mr-4" />
+              <span className="font-label font-semibold text-sm text-[#f5f5f3] flex-1">Mark as Core</span>
             </button>
-            <button className="w-full flex items-center px-6 py-4 hover:bg-background transition-colors text-left group">
-              <Tag className="w-5 h-5 text-text-secondary mr-4" />
-              <span className="font-label font-semibold text-sm text-text-primary flex-1">
-                Mark as Optional
-              </span>
+            <button className="w-full flex items-center px-6 py-3.5 hover:bg-[#1a1a18] transition-colors text-left cursor-pointer">
+              <Tag className="w-4 h-4 text-[#888780] mr-4" />
+              <span className="font-label font-semibold text-sm text-[#f5f5f3] flex-1">Mark as Optional</span>
             </button>
-            <button className="w-full flex items-center px-6 py-4 hover:bg-background transition-colors text-left group">
-              <Edit3 className="w-5 h-5 text-text-primary mr-4" />
-              <span className="font-label font-semibold text-sm text-text-primary flex-1">
-                Edit this card
-              </span>
+            <button className="w-full flex items-center px-6 py-3.5 hover:bg-[#1a1a18] transition-colors text-left cursor-pointer">
+              <Edit3 className="w-4 h-4 text-[#888780] mr-4" />
+              <span className="font-label font-semibold text-sm text-[#f5f5f3] flex-1">Edit this card</span>
             </button>
-            <button className="w-full flex items-center px-6 py-4 hover:bg-error-light/50 transition-colors text-left group">
-              <Ban className="w-5 h-5 text-error mr-4" />
-              <span className="font-label font-semibold text-sm text-error flex-1">
-                Suspend card
-              </span>
+            <button className="w-full flex items-center px-6 py-3.5 hover:bg-[#E24B4A]/10 transition-colors text-left cursor-pointer">
+              <Ban className="w-4 h-4 text-[#E24B4A] mr-4" />
+              <span className="font-label font-semibold text-sm text-[#E24B4A] flex-1">Suspend card</span>
             </button>
           </div>
 
-          <div className="px-6 pb-8 pt-4 bg-background border-t border-border">
-            <button
+          <div className="px-6 pb-8 pt-4 bg-[#09090b] border-t border-[#2c2c2a]/60">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               onClick={() => setSessionState("active")}
-              className="w-full py-3.5 bg-card border border-border rounded-card font-label font-bold text-sm text-text-primary hover:bg-border/50 transition-colors"
+              className="w-full py-3 bg-[#18181b] border border-[#2c2c2a] rounded-[10px] font-label font-semibold text-sm text-[#f5f5f3] hover:bg-[#1a1a18] transition-colors cursor-pointer"
             >
               Cancel
-            </button>
+            </motion.button>
           </div>
         </div>
       )}

@@ -20,7 +20,13 @@ export async function GET(req: NextRequest) {
     const conditions = [eq(cards.userId, userId)];
 
     if (deck_id) conditions.push(eq(cards.deckId, deck_id));
-    if (importance) conditions.push(eq(cards.importance, importance as any));
+    if (
+      importance === "core" ||
+      importance === "good_to_know" ||
+      importance === "optional"
+    ) {
+      conditions.push(eq(cards.importance, importance));
+    }
     if (due_today === "true") conditions.push(lte(cards.dueDate, new Date()));
     if (tag) conditions.push(arrayContains(cards.tags, [tag]));
 
