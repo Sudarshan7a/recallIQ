@@ -65,9 +65,12 @@ export default async function DashboardLayout({
         </nav>
 
         <div className="px-6 mt-auto">
-          <button className="w-full bg-primary hover:bg-primary-dark text-white font-label font-semibold text-sm py-3 rounded-card transition-colors flex items-center justify-center gap-2 shadow-sm">
+          <Link
+            href="/review"
+            className="w-full bg-primary hover:bg-primary-dark text-white font-label font-semibold text-sm py-3 rounded-card transition-colors flex items-center justify-center gap-2 shadow-sm"
+          >
             <PlusCircle className="w-4 h-4" /> New Session
-          </button>
+          </Link>
         </div>
       </aside>
 
@@ -103,9 +106,12 @@ export default async function DashboardLayout({
             <button className="text-text-secondary hover:text-primary transition-colors">
               <Bell className="w-5 h-5" />
             </button>
-            <div className="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center text-text-secondary font-label font-semibold text-xs cursor-pointer shadow-sm">
+            <Link
+              href="/dashboard/settings"
+              className="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center text-text-secondary font-label font-semibold text-xs cursor-pointer shadow-sm hover:border-primary transition-colors"
+            >
               JD
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -123,7 +129,7 @@ export default async function DashboardLayout({
           <span className="font-label font-semibold text-[10px]">Home</span>
         </Link>
         <Link
-          href="/dashboard/review"
+          href="/review"
           className="flex flex-col items-center gap-1 text-text-secondary hover:text-primary transition-colors relative"
         >
           <Layers className="w-6 h-6" />
