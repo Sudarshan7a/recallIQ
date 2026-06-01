@@ -31,8 +31,19 @@ export async function POST(req: NextRequest) {
       cards: generated,
       count: generated.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Generate error:", error);
+
+    if (error?.status === 503 || error?.message?.includes("503")) {
+      return NextResponse.json(
+        {
+          error:
+            "Free tier limit reached. Please wait a moment and try clicking generate again.",
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
