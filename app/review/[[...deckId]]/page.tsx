@@ -535,11 +535,11 @@ export default function ReviewSessionPage() {
 
                 <div className="flex-1 flex flex-col justify-center text-center my-auto py-4 overflow-y-auto max-h-[260px] scrollbar-thin">
                   <h2 className={`font-sans font-semibold text-[#f5f5f3] leading-snug ${
-                    (currentCard?.front?.length ?? 0) > 150
-                      ? "text-base sm:text-lg"
-                      : (currentCard?.front?.length ?? 0) > 80
+                    (currentCard?.front?.length ?? 0) > 300
                       ? "text-lg sm:text-xl"
-                      : "text-xl sm:text-2xl"
+                      : (currentCard?.front?.length ?? 0) > 150
+                      ? "text-xl sm:text-2xl"
+                      : "text-2xl sm:text-3xl"
                   }`}>
                     {currentCard?.front ?? "No cards due"}
                   </h2>
@@ -578,9 +578,9 @@ export default function ReviewSessionPage() {
                     {currentCard?.front}
                   </p>
                   <h3 className={`font-sans font-bold text-[#f5f5f3] text-center leading-snug ${
-                    (currentCard?.back?.length ?? 0) > 150
-                      ? "text-base sm:text-lg"
-                      : (currentCard?.back?.length ?? 0) > 80
+                    (currentCard?.back?.length ?? 0) > 300
+                      ? "text-lg sm:text-xl"
+                      : (currentCard?.back?.length ?? 0) > 150
                       ? "text-xl sm:text-2xl"
                       : "text-2xl sm:text-3xl"
                   }`}>
@@ -652,23 +652,7 @@ export default function ReviewSessionPage() {
           </div>
         </main>
 
-        {/* RIGHT: Keyboard shortcuts */}
-        <aside className="hidden lg:flex w-56 flex-col gap-6 pt-4 shrink-0">
-          <h4 className="font-label font-semibold text-xs text-[#888780] uppercase tracking-wider">Keyboard</h4>
-          <div className="bg-[#18181b] p-4 rounded-[12px] border border-[#2c2c2a] space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-sans text-xs text-[#f5f5f3]">Show Answer</span>
-              <kbd className="px-2 py-0.5 bg-[#09090b] rounded border border-[#2c2c2a] font-label font-semibold text-[9px] text-[#888780] shadow-sm">Space</kbd>
-            </div>
-            <div className="h-px bg-[#2c2c2a] my-2" />
-            {RATINGS.map((r) => (
-              <div key={r.label} className="flex items-center justify-between">
-                <span className={`font-sans text-xs ${r.color}`}>{r.label}</span>
-                <kbd className="px-2 py-0.5 bg-[#09090b] rounded border border-[#2c2c2a] font-label font-semibold text-[9px] text-[#888780] shadow-sm">{r.shortcut}</kbd>
-              </div>
-            ))}
-          </div>
-        </aside>
+
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════ */}

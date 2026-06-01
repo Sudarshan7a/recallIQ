@@ -319,7 +319,7 @@ function StudyPageInner() {
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="font-heading font-semibold text-base text-text-primary">Study source</h2>
-                <p className="text-xs text-text-secondary">{wordCount} words queued for generation.</p>
+                <p className="text-xs text-text-secondary">{wordCount} words ({content.length}/5000 characters) queued for generation.</p>
               </div>
               <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary shadow-sm">
                 <Wand2 className="h-3.5 w-3.5" /> AI draft
@@ -330,7 +330,8 @@ function StudyPageInner() {
               value={content}
               onChange={e => { setContent(e.target.value); if (status === "error") setStatus("idle"); }}
               disabled={status === "generating" || status === "saving"}
-              placeholder="Paste notes, transcript snippets, or textbook summaries..."
+              maxLength={5000}
+              placeholder="Paste notes, transcript snippets, or textbook summaries (maximum 5000 characters)..."
               className="min-h-56 w-full resize-y rounded-[10px] border border-border bg-background p-4 text-sm leading-6 text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all disabled:opacity-70"
             />
 
