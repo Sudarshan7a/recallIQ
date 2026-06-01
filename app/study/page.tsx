@@ -93,6 +93,7 @@ function EditablePreviewCard({
   if (isEditing) {
     return (
       <motion.div
+        inherit={false}
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         className="rounded-[12px] border border-primary/40 bg-card p-4 shadow-sm space-y-3"
@@ -176,6 +177,7 @@ function EditablePreviewCard({
       onClick={() => setFlipped((f) => !f)}
     >
       <motion.div
+        inherit={false}
         animate={{ rotateY: flipped ? 180 : 0 }}
         transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}
         className="relative w-full h-full"

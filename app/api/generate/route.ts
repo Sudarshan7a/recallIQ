@@ -9,14 +9,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const {
-      text,
-      deck_id,
-      domain,
-      prompt,
-      provider,
-      useGroq,
-    } = await req.json();
+    const { text, deck_id, domain, prompt, provider, useGroq } =
+      await req.json();
 
     const selectedProvider = provider ?? (useGroq ? "groq" : undefined);
 
