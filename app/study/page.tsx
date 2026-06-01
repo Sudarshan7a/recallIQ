@@ -16,7 +16,7 @@ import {
   Wand2,
   X,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 type FlowState =
   | "idle"
@@ -92,12 +92,7 @@ function EditablePreviewCard({
 
   if (isEditing) {
     return (
-      <motion.div
-        inherit={false}
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="rounded-[12px] border border-primary/40 bg-card p-4 shadow-sm space-y-3"
-      >
+      <div className="rounded-[12px] border border-primary/40 bg-card p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between mb-1">
           <span className="font-label font-bold text-[10px] text-text-secondary uppercase tracking-widest">
             Card {index + 1}
@@ -150,30 +145,18 @@ function EditablePreviewCard({
             <option value="optional">Optional</option>
           </select>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+        <button
           onClick={handleSave}
           className="w-full bg-primary text-white rounded-[8px] py-2 text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition-all cursor-pointer"
         >
           <CheckCircle2 className="w-3.5 h-3.5" /> Save edits
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 10 },
-        show: {
-          opacity: 1,
-          y: 0,
-          transition: { type: "spring", stiffness: 350, damping: 25 },
-        },
-      }}
-      className="w-full"
-    >
+    <div className="w-full">
       <div
         className="cursor-pointer select-none group relative h-[130px] w-full rounded-[10px] border border-border bg-background shadow-sm hover:border-primary/40 transition-all"
         onClick={() => setFlipped((f) => !f)}
@@ -201,7 +184,9 @@ function EditablePreviewCard({
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
-              <span className={`rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${badge}`}>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${badge}`}
+              >
                 {label}
               </span>
             </div>
@@ -247,7 +232,7 @@ function EditablePreviewCard({
           </span>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -496,108 +481,85 @@ function StudyPageInner() {
               </span>
             </div>
 
-            <AnimatePresence mode="wait">
-              {status === "generating" && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-[10px] border border-dashed border-border bg-background/60 text-center p-6"
-                >
-                  <Loader2 className="h-7 w-7 animate-spin text-primary" />
-                  <p className="font-heading font-semibold text-base text-text-primary">
-                    Analyzing your notes...
-                  </p>
-                  <p className="max-w-xs text-xs text-text-secondary leading-relaxed">
-                    AI is identifying key concepts, questions, and answers.
-                  </p>
-                </motion.div>
-              )}
+            {status === "generating" && (
+              <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-[10px] border border-dashed border-border bg-background/60 text-center p-6">
+                <Loader2 className="h-7 w-7 animate-spin text-primary" />
+                <p className="font-heading font-semibold text-base text-text-primary">
+                  Analyzing your notes...
+                </p>
+                <p className="max-w-xs text-xs text-text-secondary leading-relaxed">
+                  AI is identifying key concepts, questions, and answers.
+                </p>
+              </div>
+            )}
 
-              {(status === "idle" || status === "error") && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex min-h-48 flex-col items-center justify-center rounded-[10px] border border-dashed border-border bg-background/60 px-6 text-center"
-                >
-                  <Sparkles className="mb-3 h-7 w-7 text-primary/60" />
-                  <p className="font-heading font-semibold text-base text-text-primary">
-                    No generated cards yet
-                  </p>
-                  <p className="mt-1 max-w-sm text-xs text-text-secondary leading-relaxed">
-                    Paste your notes and click Generate cards.
-                  </p>
-                </motion.div>
-              )}
+            {(status === "idle" || status === "error") && (
+              <div className="flex min-h-48 flex-col items-center justify-center rounded-[10px] border border-dashed border-border bg-background/60 px-6 text-center">
+                <Sparkles className="mb-3 h-7 w-7 text-primary/60" />
+                <p className="font-heading font-semibold text-base text-text-primary">
+                  No generated cards yet
+                </p>
+                <p className="mt-1 max-w-sm text-xs text-text-secondary leading-relaxed">
+                  Paste your notes and click Generate cards.
+                </p>
+              </div>
+            )}
 
-              {(status === "preview" ||
-                status === "saving" ||
-                status === "saved") && (
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0 },
-                    show: { opacity: 1, transition: { staggerChildren: 0.06 } },
-                  }}
-                  initial="hidden"
-                  animate="show"
-                  className="space-y-3"
-                >
-                  {cards.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                      <Trash2 className="w-8 h-8 text-text-secondary mb-2" />
-                      <p className="text-sm text-text-secondary">
-                        All cards deleted. Generate again or go back.
-                      </p>
-                    </div>
-                  ) : (
-                    cards.map((card, index) => (
-                      <EditablePreviewCard
-                        key={`${card.front}-${index}`}
-                        card={card}
-                        index={index}
-                        onUpdate={updateCard}
-                        onDelete={deleteCard}
-                      />
-                    ))
-                  )}
+            {(status === "preview" ||
+              status === "saving" ||
+              status === "saved") && (
+              <div className="space-y-3">
+                {cards.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <Trash2 className="w-8 h-8 text-text-secondary mb-2" />
+                    <p className="text-sm text-text-secondary">
+                      All cards deleted. Generate again or go back.
+                    </p>
+                  </div>
+                ) : (
+                  cards.map((card, index) => (
+                    <EditablePreviewCard
+                      key={`${card.front}-${index}`}
+                      card={card}
+                      index={index}
+                      onUpdate={updateCard}
+                      onDelete={deleteCard}
+                    />
+                  ))
+                )}
 
-                  {cards.length > 0 && (
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      animate={{
-                        backgroundColor:
-                          status === "saved"
-                            ? "#1D9E75"
-                            : status === "saving"
-                              ? "#085041"
-                              : "#5C51E8",
-                      }}
-                      transition={{ duration: 0.3 }}
-                      onClick={handleSave}
-                      disabled={status === "saving" || status === "saved"}
-                      className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[10px] px-5 py-3 text-sm font-semibold text-white disabled:pointer-events-none disabled:opacity-90 transition-all cursor-pointer shadow-sm"
-                    >
-                      {status === "saving" ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : status === "saved" ? (
-                        <CheckCircle2 className="h-4 w-4" />
-                      ) : (
-                        <Save className="h-4 w-4" />
-                      )}
-                      <span>
-                        {status === "saving"
-                          ? "Saving cards..."
-                          : status === "saved"
-                            ? `Saved ${cards.length} cards to ${selectedDeck?.name ?? "deck"}`
-                            : `Save ${cards.length} card${cards.length !== 1 ? "s" : ""} to deck`}
-                      </span>
-                    </motion.button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                {cards.length > 0 && (
+                  <button
+                    onClick={handleSave}
+                    disabled={status === "saving" || status === "saved"}
+                    style={{
+                      backgroundColor:
+                        status === "saved"
+                          ? "#1D9E75"
+                          : status === "saving"
+                            ? "#085041"
+                            : "#5C51E8",
+                    }}
+                    className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[10px] px-5 py-3 text-sm font-semibold text-white disabled:pointer-events-none disabled:opacity-90 transition-colors cursor-pointer shadow-sm"
+                  >
+                    {status === "saving" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : status === "saved" ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span>
+                      {status === "saving"
+                        ? "Saving cards..."
+                        : status === "saved"
+                          ? `Saved ${cards.length} cards to ${selectedDeck?.name ?? "deck"}`
+                          : `Save ${cards.length} card${cards.length !== 1 ? "s" : ""} to deck`}
+                    </span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
