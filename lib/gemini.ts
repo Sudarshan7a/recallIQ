@@ -1,18 +1,21 @@
-import { GoogleGenAI } from "@google/genai";
+import { generateContentInterceptor, type AIProvider } from "@/lib/ai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+type Flashcard = {
+  front: string;
+  back: string;
+  importance: "core" | "good_to_know" | "optional";
+  tags: string[];
+};
+
+interface GenerateCardsOptions {
+  provider?: AIProvider;
+}
 
 export async function generateCards(
   text: string,
   domain: string = "general",
-): Promise<
-  Array<{
-    front: string;
-    back: string;
-    importance: "core" | "good_to_know" | "optional";
-    tags: string[];
-  }>
-> {
+  options?: GenerateCardsOptions,
+): Promise<Flashcard[]> {
   const prompt = `You are an expert at creating high quality spaced repetition flashcards for students.
 
 A student just learned the following:
@@ -41,12 +44,27 @@ Return ONLY a valid JSON array. No explanation, no markdown, no backticks. Examp
   }
 ]`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: prompt,
-  });
+  return parseFlashcards(
+    await generateContentInterceptor({
+      prompt,
+      provider: options?.provider,
+    }),
+  );
+}
 
-  const raw = response.text ?? "";
+export async function generateCardsFromPrompt(
+  prompt: string,
+  options?: GenerateCardsOptions,
+): Promise<Flashcard[]> {
+  return parseFlashcards(
+    await generateContentInterceptor({
+      prompt,
+      provider: options?.provider,
+    }),
+  );
+}
+
+function parseFlashcards(raw: string): Flashcard[] {
   const clean = raw.replace(/```json|```/g, "").trim();
 
   try {

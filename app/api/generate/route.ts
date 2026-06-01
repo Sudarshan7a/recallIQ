@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/middleware";
-import { generateCards } from "@/lib/gemini";
+import { generateCards, generateCardsFromPrompt } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,16 +9,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { text, deck_id, domain } = await req.json();
+    const {
+      text,
+      deck_id,
+      domain,
+      prompt,
+      provider,
+      useGroq,
+    } = await req.json();
 
-    if (!text || !deck_id) {
+    const selectedProvider = provider ?? (useGroq ? "groq" : undefined);
+
+    if (!prompt && (!text || !deck_id)) {
       return NextResponse.json(
         { error: "Text and deck_id are required" },
         { status: 400 },
       );
     }
 
-    const generated = await generateCards(text, domain);
+    const generated = prompt
+      ? await generateCardsFromPrompt(prompt, {
+          provider: selectedProvider,
+        })
+      : await generateCards(text, domain, {
+          provider: selectedProvider,
+        });
 
     if (generated.length === 0) {
       return NextResponse.json(
@@ -28,6 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
+      data: generated,
       cards: generated,
       count: generated.length,
     });
