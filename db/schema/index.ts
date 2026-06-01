@@ -33,6 +33,8 @@ export const users = pgTable("users", {
   streak: integer("streak").default(0),
   lastStudiedAt: timestamp("last_studied_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  resetToken: text("reset_token"),
+  resetTokenExpires: timestamp("reset_token_expires"),
 });
 
 export const decks = pgTable("decks", {

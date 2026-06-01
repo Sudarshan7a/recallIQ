@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/middleware";
 import { generateCards, generateCardsFromPrompt } from "@/lib/gemini";
+import { z } from "zod";
+
+const generateSchema = z.object({
+  text: z.string().min(10).max(5000),
+  deck_id: z.string().uuid(),
+  domain: z.string().optional(),
+  prompt: z.string().optional(),
+  provider: z.enum(["gemini", "groq"]).optional(),
+  useGroq: z.boolean().optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,8 +19,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { text, deck_id, domain, prompt, provider, useGroq } =
-      await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const result = generateSchema.safeParse(body);
+    if (!result.success) {
+      const errorMsg = result.error.issues
+        .map((issue: z.ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+        .join(", ");
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
+    }
+
+    const { text, deck_id, domain, prompt, provider, useGroq } = result.data;
 
     const selectedProvider = provider ?? (useGroq ? "groq" : undefined);
 
@@ -41,10 +63,11 @@ export async function POST(req: NextRequest) {
       cards: generated,
       count: generated.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Generate error:", error);
 
-    if (error?.status === 503 || error?.message?.includes("503")) {
+    const err = error as { status?: number; message?: string };
+    if (err?.status === 503 || err?.message?.includes("503")) {
       return NextResponse.json(
         {
           error:

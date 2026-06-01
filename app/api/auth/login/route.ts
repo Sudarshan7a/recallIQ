@@ -4,16 +4,29 @@ import { users } from "@/db/schema";
 import { verifyPassword, generateToken } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 },
-      );
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const result = loginSchema.safeParse(body);
+    if (!result.success) {
+      const errorMsg = result.error.issues
+        .map((issue: z.ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+        .join(", ");
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
+    }
+
+    const { email, password } = result.data;
 
     const [user] = await db
       .select()

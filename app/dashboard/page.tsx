@@ -44,7 +44,7 @@ type Stats = {
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [decks, setDecks] = useState<any[]>([]);
+  const [decks, setDecks] = useState<unknown[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 

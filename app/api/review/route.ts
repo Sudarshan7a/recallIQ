@@ -4,6 +4,12 @@ import { cards, revlog, users } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/middleware";
 import { scheduleReview, Rating, State } from "@/lib/fsrs";
 import { eq, and, sql } from "drizzle-orm";
+import { z } from "zod";
+
+const reviewSchema = z.object({
+  card_id: z.string().uuid(),
+  rating: z.number().int().min(1).max(4),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,14 +18,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { card_id, rating } = await req.json();
-
-    if (!card_id || rating === undefined) {
-      return NextResponse.json(
-        { error: "card_id and rating are required" },
-        { status: 400 },
-      );
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const validationResult = reviewSchema.safeParse(body);
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.issues
+        .map((issue: z.ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+        .join(", ");
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
+    }
+
+    const { card_id, rating } = validationResult.data;
     // Get the user
     const [user] = await db
       .select()

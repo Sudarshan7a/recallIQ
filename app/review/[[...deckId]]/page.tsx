@@ -154,7 +154,7 @@ export default function ReviewSessionPage() {
     fetch(url, { credentials: "include" })
       .then(async (res) => {
         const data: SessionResult = await res.json();
-        if (!res.ok) throw new Error((data as any).error ?? "Failed to load session");
+        if (!res.ok) throw new Error((data as { error?: string }).error ?? "Failed to load session");
         if (!data.cards || data.cards.length === 0) {
           // No cards due — go directly to summary with zeros
           setSessionState("summary");

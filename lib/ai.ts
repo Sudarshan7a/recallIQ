@@ -21,8 +21,9 @@ export async function generateContentInterceptor({
 
   try {
     return await callGemini(prompt);
-  } catch (error: any) {
-    const is503 = error?.status === 503 || error?.message?.includes("503");
+  } catch (error: unknown) {
+    const err = error as { status?: number; message?: string };
+    const is503 = err?.status === 503 || err?.message?.includes("503");
 
     if (is503) {
       console.warn(

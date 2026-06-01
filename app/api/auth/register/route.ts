@@ -4,16 +4,30 @@ import { users } from "@/db/schema";
 import { hashPassword, generateToken } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
+import { z } from "zod";
+
+const registerSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password } = await req.json();
-
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: "Name, email and password are required" },
-        { status: 400 },
-      );
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const result = registerSchema.safeParse(body);
+    if (!result.success) {
+      const errorMsg = result.error.issues
+        .map((issue: z.ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+        .join(", ");
+      return NextResponse.json({ error: errorMsg }, { status: 400 });
+    }
+
+    const { name, email, password } = result.data;
 
     // Check if user already exists
     const existing = await db
