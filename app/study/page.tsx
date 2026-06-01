@@ -172,29 +172,17 @@ function EditablePreviewCard({
           transition: { type: "spring", stiffness: 350, damping: 25 },
         },
       }}
-      className="cursor-pointer select-none group h-[130px] w-full"
-      style={{ perspective: "1000px" }}
-      onClick={() => setFlipped((f) => !f)}
+      className="w-full"
     >
-      <motion.div
-        inherit={false}
-        animate={{ rotateY: flipped ? 180 : 0 }}
-        transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}
-        className="relative w-full h-full"
-        style={{
-          transformStyle: "preserve-3d",
-          WebkitTransformStyle: "preserve-3d",
-        }}
+      <div
+        className="cursor-pointer select-none group relative h-[130px] w-full rounded-[10px] border border-border bg-background shadow-sm hover:border-primary/40 transition-all"
+        onClick={() => setFlipped((f) => !f)}
       >
         {/* FRONT */}
         <div
-          className="absolute inset-0 bg-card border border-border rounded-[10px] p-4 flex flex-col justify-between hover:border-text-secondary/30 transition-colors shadow-sm"
-          style={{
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(0deg)",
-            WebkitTransform: "rotateY(0deg)",
-          }}
+          className={`absolute inset-0 rounded-[10px] p-4 flex flex-col justify-between transition-opacity duration-300 ${
+            flipped ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-bold text-text-secondary uppercase tracking-widest">
@@ -203,7 +191,7 @@ function EditablePreviewCard({
             <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setIsEditing(true)}
-                className="p-1 rounded-full text-text-secondary hover:text-primary hover:bg-background transition-colors cursor-pointer"
+                className="p-1 rounded-full text-text-secondary hover:text-primary hover:bg-card transition-colors cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
               </button>
@@ -213,9 +201,7 @@ function EditablePreviewCard({
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${badge}`}
-              >
+              <span className={`rounded-full border px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider ${badge}`}>
                 {label}
               </span>
             </div>
@@ -223,20 +209,16 @@ function EditablePreviewCard({
           <h3 className="font-body text-sm font-semibold text-text-primary line-clamp-2 my-auto">
             {card.front}
           </h3>
-          <span className="text-[8px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest text-center">
-            Tap to reveal answer
+          <span className="text-[8px] font-bold text-primary opacity-0 group-hover:opacity-60 transition-opacity uppercase tracking-widest text-center">
+            Click to reveal answer
           </span>
         </div>
 
         {/* BACK */}
         <div
-          className="absolute inset-0 bg-card border border-border rounded-[10px] p-4 flex flex-col justify-between shadow-sm"
-          style={{
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-            WebkitTransform: "rotateY(180deg)",
-          }}
+          className={`absolute inset-0 rounded-[10px] p-4 flex flex-col justify-between transition-opacity duration-300 ${
+            flipped ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
         >
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-bold text-primary uppercase tracking-widest">
@@ -245,7 +227,7 @@ function EditablePreviewCard({
             <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setIsEditing(true)}
-                className="p-1 rounded-full text-text-secondary hover:text-primary hover:bg-background transition-colors cursor-pointer"
+                className="p-1 rounded-full text-text-secondary hover:text-primary hover:bg-card transition-colors cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
               </button>
@@ -260,11 +242,11 @@ function EditablePreviewCard({
           <p className="font-body text-xs text-text-secondary leading-relaxed line-clamp-3 my-auto">
             {card.back}
           </p>
-          <span className="text-[8px] font-bold text-text-secondary uppercase tracking-widest text-center">
-            Tap to view question
+          <span className="text-[8px] font-bold text-text-secondary opacity-60 uppercase tracking-widest text-center">
+            Click to view question
           </span>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
@@ -429,7 +411,7 @@ function StudyPageInner() {
                   Study source
                 </h2>
                 <p className="text-xs text-text-secondary">
-                  {wordCount} words ({content.length}/5000 characters) queued
+                  {wordCount} words ({content.length}/2000 characters) queued
                   for generation.
                 </p>
               </div>
@@ -445,8 +427,8 @@ function StudyPageInner() {
                 if (status === "error") setStatus("idle");
               }}
               disabled={status === "generating" || status === "saving"}
-              maxLength={5000}
-              placeholder="Paste notes, transcript snippets, or textbook summaries (maximum 5000 characters)..."
+              maxLength={2000}
+              placeholder="Paste notes, transcript snippets, or textbook summaries (maximum 2000 characters)..."
               className="min-h-56 w-full resize-y rounded-[10px] border border-border bg-background p-4 text-sm leading-6 text-text-primary outline-none placeholder:text-text-secondary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all disabled:opacity-70"
             />
 
