@@ -138,12 +138,17 @@ function EditablePreviewCard({
         animate={{ rotateY: flipped ? 180 : 0 }}
         transition={{ duration: 0.42, ease: [0.23, 1, 0.32, 1] }}
         className="relative w-full h-full"
-        style={{ transformStyle: "preserve-3d" }}
+        style={{ transformStyle: "preserve-3d", WebkitTransformStyle: "preserve-3d" }}
       >
         {/* FRONT */}
         <div
           className="absolute inset-0 bg-card border border-border rounded-[10px] p-4 flex flex-col justify-between hover:border-text-secondary/30 transition-colors shadow-sm"
-          style={{ backfaceVisibility: "hidden" }}
+          style={{
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(0deg)",
+            WebkitTransform: "rotateY(0deg)"
+          }}
         >
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-bold text-text-secondary uppercase tracking-widest">Card {index + 1} · Front</span>
@@ -166,7 +171,12 @@ function EditablePreviewCard({
         {/* BACK */}
         <div
           className="absolute inset-0 bg-card border border-border rounded-[10px] p-4 flex flex-col justify-between shadow-sm"
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          style={{
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+            WebkitTransform: "rotateY(180deg)"
+          }}
         >
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Card {index + 1} · Back</span>

@@ -480,7 +480,7 @@ export default function ReviewSessionPage() {
         </aside>
 
         {/* CENTER: Card arena */}
-        <main className="flex-1 w-full max-w-[550px] px-4 lg:px-0 flex flex-col pt-6 pb-8 relative z-10 overflow-hidden">
+        <main className="flex-1 w-full max-w-[680px] px-4 lg:px-0 flex flex-col pt-6 pb-8 relative z-10 overflow-hidden">
 
           {/* Deck label */}
           <div className="flex items-center gap-2 mb-4 text-[#888780] justify-center">
@@ -509,7 +509,7 @@ export default function ReviewSessionPage() {
                 ? "transition-all duration-500 translate-x-[120%] opacity-0 rotate-6"
                 : ""
             }`}
-            style={{ perspective: "1000px", minHeight: "280px" }}
+            style={{ perspective: "1000px", minHeight: "360px" }}
             onClick={!isFlipped ? () => setIsFlipped(true) : undefined}
             onContextMenu={(e) => { e.preventDefault(); setSessionState("options"); }}
           >
@@ -517,24 +517,35 @@ export default function ReviewSessionPage() {
               animate={{ rotateY: isFlipped ? 180 : 0 }}
               transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
               className="relative w-full h-full"
-              style={{ transformStyle: "preserve-3d" }}
+              style={{ transformStyle: "preserve-3d", WebkitTransformStyle: "preserve-3d" }}
             >
               {/* FRONT */}
               <div
                 className="absolute inset-0 bg-[#18181b] rounded-[16px] border border-[#2c2c2a] shadow-[0_8px_32px_rgba(0,0,0,0.4)] p-6 lg:p-10 flex flex-col justify-between hover:border-[#3c3c3a] transition-all duration-200"
-                style={{ backfaceVisibility: "hidden" }}
+                style={{
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                  transform: "rotateY(0deg)",
+                  WebkitTransform: "rotateY(0deg)"
+                }}
               >
                 <div className="absolute top-5 right-5 bg-[#5C51E8]/10 text-[#5C51E8] font-label font-bold text-[9px] px-2 py-0.5 rounded border border-[#5C51E8]/20 uppercase tracking-widest">
                   {currentIndex + 1}/{totalCards}
                 </div>
 
-                <div className="flex-1 flex items-center justify-center text-center mt-6">
-                  <h2 className="font-sans font-semibold text-xl text-[#f5f5f3] leading-snug">
+                <div className="flex-1 flex flex-col justify-center text-center my-auto py-4 overflow-y-auto max-h-[260px] scrollbar-thin">
+                  <h2 className={`font-sans font-semibold text-[#f5f5f3] leading-snug ${
+                    (currentCard?.front?.length ?? 0) > 150
+                      ? "text-base sm:text-lg"
+                      : (currentCard?.front?.length ?? 0) > 80
+                      ? "text-lg sm:text-xl"
+                      : "text-xl sm:text-2xl"
+                  }`}>
                     {currentCard?.front ?? "No cards due"}
                   </h2>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-dashed border-[#2c2c2a] text-center flex flex-col items-center gap-1.5 opacity-70">
+                <div className="mt-8 pt-6 border-t border-dashed border-[#2c2c2a] text-center flex flex-col items-center gap-1.5 opacity-70 shrink-0">
                   <p className="font-sans text-xs text-[#888780]">Think about it before revealing</p>
                   <div className="flex items-center gap-1.5 text-[#888780] mt-0.5">
                     <Touchpad className="w-4 h-4" />
@@ -546,9 +557,14 @@ export default function ReviewSessionPage() {
               {/* BACK */}
               <div
                 className="absolute inset-0 bg-[#18181b] rounded-[16px] border border-[#2c2c2a] shadow-[0_8px_32px_rgba(0,0,0,0.4)] p-6 lg:p-10 flex flex-col justify-between hover:border-[#3c3c3a] transition-all duration-200"
-                style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                style={{
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                  WebkitTransform: "rotateY(180deg)"
+                }}
               >
-                <header className="flex justify-between items-start">
+                <header className="flex justify-between items-start shrink-0">
                   <span className="font-label font-bold text-[9px] text-[#1D9E75] tracking-widest uppercase bg-[#1D9E75]/10 border border-[#1D9E75]/20 px-2 py-0.5 rounded">
                     Answer
                   </span>
@@ -557,16 +573,22 @@ export default function ReviewSessionPage() {
                   </div>
                 </header>
 
-                <div className="my-auto py-4">
-                  <p className="font-sans text-xs text-[#888780] italic line-clamp-2 mb-3 text-center">
+                <div className="flex-1 flex flex-col justify-center my-auto py-4 overflow-y-auto max-h-[260px] scrollbar-thin">
+                  <p className="font-sans text-xs text-[#888780] italic line-clamp-2 mb-3 text-center shrink-0">
                     {currentCard?.front}
                   </p>
-                  <h3 className="font-sans font-bold text-3xl text-[#f5f5f3] text-center leading-snug">
+                  <h3 className={`font-sans font-bold text-[#f5f5f3] text-center leading-snug ${
+                    (currentCard?.back?.length ?? 0) > 150
+                      ? "text-base sm:text-lg"
+                      : (currentCard?.back?.length ?? 0) > 80
+                      ? "text-xl sm:text-2xl"
+                      : "text-2xl sm:text-3xl"
+                  }`}>
                     {currentCard?.back}
                   </h3>
                 </div>
 
-                <div className="mt-auto border-t border-[#2c2c2a] pt-4">
+                <div className="mt-auto border-t border-[#2c2c2a] pt-4 shrink-0">
                   <p className="font-sans text-xs text-[#888780] text-center">
                     How well did you remember this?
                   </p>
@@ -591,9 +613,6 @@ export default function ReviewSessionPage() {
               >
                 <Eye className="w-4 h-4 text-[#888780]" />
                 <span className="font-sans font-semibold text-sm">Show answer</span>
-                <kbd className="ml-2 px-1.5 py-0.5 bg-[#0f0f0e] rounded border border-[#2c2c2a] font-label text-[9px] text-[#888780] tracking-wide">
-                  Space
-                </kbd>
               </motion.button>
             ) : (
               /* Rating pills — Forgot / Hard / Got it / Easy */
@@ -626,11 +645,6 @@ export default function ReviewSessionPage() {
                     >
                       {rating.label}
                     </motion.button>
-
-                    {/* Keyboard shortcut hint */}
-                    <kbd className="mt-1.5 px-1.5 py-0.5 bg-[#0f0f0e] rounded border border-[#2c2c2a] font-label text-[8px] text-[#888780] tracking-wide">
-                      {rating.shortcut}
-                    </kbd>
                   </div>
                 ))}
               </div>
