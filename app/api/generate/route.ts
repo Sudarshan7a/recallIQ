@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     if (!text || !deck_id) {
       return NextResponse.json(
         { error: "Text and deck_id are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     if (generated.length === 0) {
       return NextResponse.json(
         { error: "Could not generate cards from this text" },
-        { status: 422 }
+        { status: 422 },
       );
     }
 
@@ -40,13 +40,13 @@ export async function POST(req: NextRequest) {
           error:
             "Free tier limit reached. Please wait a moment and try clicking generate again.",
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
