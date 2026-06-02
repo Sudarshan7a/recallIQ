@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   ArrowRight,
   Shield,
@@ -13,8 +13,10 @@ import {
   Calendar,
   Layers,
   Award,
+  Trophy,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { OnboardingFlow } from "@/components/ui/OnboardingFlow";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -42,13 +44,19 @@ type Stats = {
   heatmap: Array<{ date: string; count: number }>;
 };
 
+type Deck = {
+  id: string;
+  name: string;
+  cardCount?: number;
+};
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [decks, setDecks] = useState<unknown[]>([]);
+  const [decks, setDecks] = useState<Deck[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     Promise.all([
       fetch("/api/stats", { credentials: "include" }).then(async (res) => {
         const data = await res.json();
@@ -72,6 +80,10 @@ export default function DashboardPage() {
       });
   }, []);
 
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   if (isLoading) {
     return (
       <div className="p-6 md:p-10 max-w-[1440px] mx-auto flex items-center justify-center min-h-[60vh]">
@@ -87,9 +99,40 @@ export default function DashboardPage() {
   }
 
   const cardsDue = stats?.due_today ?? 0;
-  const isNewUser = stats?.total_cards === 0;
-  const isEmpty = cardsDue === 0;
   const isOverloaded = cardsDue > 100;
+
+  const totalCards = decks.reduce((acc: number, d: Deck) => acc + (d.cardCount || 0), 0);
+  const hasXP = (stats?.xp ?? 0) > 0;
+  const showOnboarding = decks.length === 0 || totalCards === 0 || (!hasXP && totalCards > 0);
+
+  if (showOnboarding) {
+    return (
+      <div className="p-6 md:p-10 max-w-[1440px] mx-auto space-y-8 animate-in fade-in duration-300">
+        {error && (
+          <div className="rounded-card border border-error/20 bg-error-light p-4 text-sm text-error-dark">
+            {error}
+          </div>
+        )}
+
+        {/* HEADER / GREETING */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="font-heading font-bold text-3xl md:text-4xl text-text-primary tracking-tight">
+              Welcome to RecallIQ.
+            </h1>
+            <p className="font-body font-normal text-text-secondary mt-1">
+              Your personal AI-powered spaced repetition system.
+            </p>
+          </div>
+        </div>
+
+        {/* Onboarding flow sits where the dashboard content normally sits */}
+        <OnboardingFlow decks={decks} stats={stats} onRefresh={loadData} />
+      </div>
+    );
+  }
+
+  const isEmpty = cardsDue === 0;
 
   return (
     <motion.div
@@ -134,36 +177,29 @@ export default function DashboardPage() {
         {/* ========================================== */}
         <div className="lg:col-span-8 flex flex-col gap-6">
           {isEmpty ? (
-            /* NEW USER EMPTY STATE */
+            /* Catch-up empty state for existing users */
             <motion.div
               variants={itemVariants}
               whileHover={{ y: -1.5 }}
-              className="bg-card border border-border rounded-large-card p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+              className="bg-card border border-border rounded-large-card p-8 shadow-sm relative overflow-hidden flex flex-col items-center justify-center text-center py-12"
             >
-              <div className="relative z-10 w-full">
-                <h2 className="font-sans font-semibold text-lg mb-1 text-text-primary">
-                  Today&apos;s Review
-                </h2>
-                <div className="flex items-baseline gap-2 mb-4">
-                  <span className="font-sans font-bold text-6xl tracking-tight leading-none text-primary">
-                    0
-                  </span>
-                  <span className="font-sans font-bold text-xs text-text-secondary uppercase tracking-widest">
-                    cards due
-                  </span>
-                </div>
-                <p className="font-sans text-sm text-text-secondary mb-6">
-                  You&apos;re all caught up before you even started.
-                </p>
-                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                  <Link
-                    href="/study"
-                    className="inline-flex items-center gap-2 bg-primary text-white hover:bg-primary-dark font-sans font-semibold px-6 py-2.5 rounded-lg transition-all shadow-sm cursor-pointer self-start"
-                  >
-                    Add first card <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </motion.div>
+              <div className="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center mb-4">
+                <Trophy className="w-8 h-8" />
               </div>
+              <h2 className="font-heading font-bold text-xl text-text-primary mb-1">
+                You&apos;re all caught up
+              </h2>
+              <p className="font-body text-sm text-text-secondary mb-6 max-w-sm">
+                No cards due today. Come back tomorrow or add more content.
+              </p>
+              <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                <Link
+                  href="/study"
+                  className="inline-flex items-center gap-2 bg-primary text-white hover:bg-primary-dark font-sans font-semibold px-6 py-2.5 rounded-lg transition-all shadow-sm cursor-pointer"
+                >
+                  Add More Content <ArrowRight className="w-4 h-4" />
+                </Link>
+              </motion.div>
             </motion.div>
           ) : isOverloaded ? (
             /* OVERLOAD STATE (Split Hero + Triage) */

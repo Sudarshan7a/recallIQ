@@ -168,21 +168,19 @@ Gaps / Issues:
 - Deck CRUD: create, update, delete decks with DB persistence (`/api/decks`).
 - Review flow: load session (`GET /api/review/session`), rate card (`POST /api/review`) → FSRS scheduling (`ts-fsrs`), card updates, `revlog` entry inserted, user XP and streak updated. End-to-end present.
 - Stats: `/api/stats` aggregates DB data and is used by Dashboard. End-to-end present assuming DB has data.
+- **Card editing during review session**: Tap edit icon on card back to edit inline, call `PATCH /api/cards/:id`, and save changes without losing review place.
+- **Onboarding experience**: 3-step setup flow for new users (Step 1: create deck, Step 2: add content, Step 3: start review) and Trophy empty state for caught-up users.
+- **Global search**: Live debounced search across decks and cards, including highlighting and auto-scrolling to the selected card.
 
 ## What Is Incomplete or Broken
 - `app/dashboard/settings/settings-client.tsx` uses mocked user data and does not call `/api/auth/me` or `/api/auth/logout` (client-side logout clears localStorage only). Status: ⚠️ Partial — fix required to call real endpoints.
 - `app/auth/login.tsx` and `app/auth/register.tsx` files exist but are empty (unused placeholders). Could be confusing. Status: ⚠️ Partial.
-- No explicit rate limiting or safeguards around `/api/generate` (AI) and `/api/generate/save` — risk of overuse or hitting API limits. Status: ⚠️ Needs work.
 - No tests in the repo; no CI configuration observed.
 - No server-side validation for some user inputs beyond basic checks (most endpoints trust request body shapes). Consider stricter validation.
 - No obvious mechanism in code to verify that migrations were applied to a running DB — migrations exist, but application of them is environment-specific.
-- Links in UI referencing `/forgot-password` appear but no route/file exists in project. Status: ❌ Missing.
 
 ## What Has Not Been Started
 Per V1 scope items, everything core is present in the codebase, but the following are missing or not implemented in repo:
-- Forgot password flow (UI + backend) — not present.
-- Server-side settings endpoints (settings UI is mocked) — partial.
-- Automated rate limiting / quota enforcement for AI generation — not implemented.
 - Automated tests and CI — not started.
 
 ## Decisions Made

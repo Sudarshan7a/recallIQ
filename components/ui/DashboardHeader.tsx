@@ -5,6 +5,7 @@ import { Bell } from "lucide-react";
 import { XPBar } from "./XPBar";
 import { StreakBadge } from "./StreakBadge";
 import { motion } from "framer-motion";
+import { GlobalSearch } from "./GlobalSearch";
 
 interface DashboardHeaderProps {
   level: number;
@@ -26,6 +27,7 @@ export function DashboardHeader({
       </div>
       <div className="hidden md:block" /> {/* Spacer */}
       <div className="flex items-center gap-4">
+        <GlobalSearch />
         {/* Streak & XP status */}
         <div className="hidden sm:flex items-center gap-5">
           {/* XP Bar */}

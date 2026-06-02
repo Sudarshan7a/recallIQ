@@ -145,6 +145,64 @@ export default function ReviewSessionPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Inline Edit State ──────────────────────────────────────────────────────
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFront, setEditFront] = useState("");
+  const [editBack, setEditBack] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+  }, []);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const t = setTimeout(() => setToastMessage(""), 3000);
+    return () => clearTimeout(t);
+  }, [toastMessage]);
+
+  const startEditing = useCallback(() => {
+    const card = cards[currentIndex];
+    if (!card) return;
+    setEditFront(card.front);
+    setEditBack(card.back);
+    setEditError("");
+    setIsEditing(true);
+  }, [cards, currentIndex]);
+
+  const handleSaveEdit = useCallback(async () => {
+    const card = cards[currentIndex];
+    if (!card) return;
+    setIsSavingEdit(true);
+    setEditError("");
+    try {
+      const res = await fetch(`/api/cards/${card.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ front: editFront, back: editBack }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to update card");
+      }
+      setCards((prev) =>
+        prev.map((c, i) =>
+          i === currentIndex ? { ...c, front: editFront, back: editBack } : c
+        )
+      );
+      setIsEditing(false);
+      showToast("Card updated");
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }, [cards, currentIndex, editFront, editBack, showToast]);
+
+
   // ─── Load session ──────────────────────────────────────────────────────────
   useEffect(() => {
     const url = deckId
@@ -233,6 +291,7 @@ export default function ReviewSessionPage() {
       } else {
         setTimeout(() => {
           setIsFlipped(false);
+          setIsEditing(false);
           setCurrentIndex((prev) => prev + 1);
         }, skipAnimation ? 0 : 700);
       }
@@ -564,35 +623,112 @@ export default function ReviewSessionPage() {
                   WebkitTransform: "rotateY(180deg)"
                 }}
               >
-                <header className="flex justify-between items-start shrink-0">
-                  <span className="font-label font-bold text-[9px] text-[#1D9E75] tracking-widest uppercase bg-[#1D9E75]/10 border border-[#1D9E75]/20 px-2 py-0.5 rounded">
-                    Answer
-                  </span>
-                  <div className="bg-[#5C51E8]/10 text-[#5C51E8] font-label font-bold text-[9px] px-2 py-0.5 rounded border border-[#5C51E8]/20 uppercase tracking-widest">
-                    {currentIndex + 1}/{totalCards}
+                {isEditing ? (
+                  <div className="flex-1 flex flex-col justify-between h-full" onClick={(e) => e.stopPropagation()}>
+                    <header className="flex justify-between items-start shrink-0">
+                      <span className="font-label font-bold text-[9px] text-[#5C51E8] tracking-widest uppercase bg-[#5C51E8]/10 border border-[#5C51E8]/20 px-2 py-0.5 rounded">
+                        Edit Card
+                      </span>
+                    </header>
+
+                    <div className="flex-1 flex flex-col gap-3 py-4 overflow-y-auto scrollbar-thin text-left">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[9px] uppercase font-label font-bold text-[#888780] tracking-wider">Front (Question)</label>
+                        <textarea
+                          value={editFront}
+                          onChange={(e) => setEditFront(e.target.value)}
+                          className="w-full bg-[#101012] border border-[#2c2c2a] rounded-[8px] p-2 text-sm text-[#f5f5f3] focus:outline-none focus:border-[#5C51E8] resize-none h-16 font-sans"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[9px] uppercase font-label font-bold text-[#888780] tracking-wider">Back (Answer)</label>
+                        <textarea
+                          value={editBack}
+                          onChange={(e) => setEditBack(e.target.value)}
+                          className="w-full bg-[#101012] border border-[#2c2c2a] rounded-[8px] p-2 text-sm text-[#f5f5f3] focus:outline-none focus:border-[#5C51E8] resize-none h-20 font-sans"
+                        />
+                      </div>
+                      {editError && (
+                        <p className="text-[11px] text-[#E24B4A] font-sans mt-0.5">{editError}</p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 pt-3 border-t border-[#2c2c2a] shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveEdit();
+                        }}
+                        disabled={isSavingEdit}
+                        className="flex-1 bg-[#5C51E8] text-white py-2 rounded-[8px] font-label font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-[#3c3489] transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        {isSavingEdit ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          "Save"
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsEditing(false);
+                          setEditError("");
+                        }}
+                        disabled={isSavingEdit}
+                        className="flex-1 bg-transparent border border-[#2c2c2a] text-[#888780] py-2 rounded-[8px] font-label font-bold text-xs hover:bg-[#1a1a18] transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                </header>
+                ) : (
+                  <div className="flex-1 flex flex-col justify-between h-full">
+                    <header className="flex justify-between items-start shrink-0">
+                      <span className="font-label font-bold text-[9px] text-[#1D9E75] tracking-widest uppercase bg-[#1D9E75]/10 border border-[#1D9E75]/20 px-2 py-0.5 rounded">
+                        Answer
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing();
+                          }}
+                          className="p-1 rounded text-[#888780] hover:text-[#f5f5f3] hover:bg-[#1a1a18] transition-colors cursor-pointer"
+                          title="Edit this card"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <div className="bg-[#5C51E8]/10 text-[#5C51E8] font-label font-bold text-[9px] px-2 py-0.5 rounded border border-[#5C51E8]/20 uppercase tracking-widest">
+                          {currentIndex + 1}/{totalCards}
+                        </div>
+                      </div>
+                    </header>
 
-                <div className="flex-1 flex flex-col justify-center my-auto py-4 overflow-y-auto max-h-[260px] scrollbar-thin">
-                  <p className="font-sans text-xs text-[#888780] italic line-clamp-2 mb-3 text-center shrink-0">
-                    {currentCard?.front}
-                  </p>
-                  <h3 className={`font-sans font-bold text-[#f5f5f3] text-center leading-snug ${
-                    (currentCard?.back?.length ?? 0) > 300
-                      ? "text-lg sm:text-xl"
-                      : (currentCard?.back?.length ?? 0) > 150
-                      ? "text-xl sm:text-2xl"
-                      : "text-2xl sm:text-3xl"
-                  }`}>
-                    {currentCard?.back}
-                  </h3>
-                </div>
+                    <div className="flex-1 flex flex-col justify-center my-auto py-4 overflow-y-auto max-h-[260px] scrollbar-thin">
+                      <p className="font-sans text-xs text-[#888780] italic line-clamp-2 mb-3 text-center shrink-0">
+                        {currentCard?.front}
+                      </p>
+                      <h3 className={`font-sans font-bold text-[#f5f5f3] text-center leading-snug ${
+                        (currentCard?.back?.length ?? 0) > 300
+                          ? "text-lg sm:text-xl"
+                          : (currentCard?.back?.length ?? 0) > 150
+                          ? "text-xl sm:text-2xl"
+                          : "text-2xl sm:text-3xl"
+                      }`}>
+                        {currentCard?.back}
+                      </h3>
+                    </div>
 
-                <div className="mt-auto border-t border-[#2c2c2a] pt-4 shrink-0">
-                  <p className="font-sans text-xs text-[#888780] text-center">
-                    How well did you remember this?
-                  </p>
-                </div>
+                    <div className="mt-auto border-t border-[#2c2c2a] pt-4 shrink-0">
+                      <p className="font-sans text-xs text-[#888780] text-center">
+                        How well did you remember this?
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -614,7 +750,7 @@ export default function ReviewSessionPage() {
                 <Eye className="w-4 h-4 text-[#888780]" />
                 <span className="font-sans font-semibold text-sm">Show answer</span>
               </motion.button>
-            ) : (
+            ) : isEditing ? null : (
               /* Rating pills — Forgot / Hard / Got it / Easy */
               <div className="grid grid-cols-4 gap-2 sm:gap-3">
                 {RATINGS.map((rating) => (
@@ -718,7 +854,14 @@ export default function ReviewSessionPage() {
               <Tag className="w-4 h-4 text-[#888780] mr-4" />
               <span className="font-label font-semibold text-sm text-[#f5f5f3] flex-1">Mark as Optional</span>
             </button>
-            <button className="w-full flex items-center px-6 py-3.5 hover:bg-[#1a1a18] transition-colors text-left cursor-pointer">
+            <button
+              onClick={() => {
+                setSessionState("active");
+                setIsFlipped(true);
+                startEditing();
+              }}
+              className="w-full flex items-center px-6 py-3.5 hover:bg-[#1a1a18] transition-colors text-left cursor-pointer"
+            >
               <Edit3 className="w-4 h-4 text-[#888780] mr-4" />
               <span className="font-label font-semibold text-sm text-[#f5f5f3] flex-1">Edit this card</span>
             </button>
@@ -740,6 +883,21 @@ export default function ReviewSessionPage() {
           </div>
         </div>
       )}
+
+      {/* SUCCESS TOAST */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#1a1a18] border border-[#2c2c2a] text-[#f5f5f3] px-4 py-2.5 rounded-[12px] font-sans font-semibold text-xs shadow-lg z-50 flex items-center gap-2"
+          >
+            <Check className="w-4 h-4 text-[#1D9E75]" />
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

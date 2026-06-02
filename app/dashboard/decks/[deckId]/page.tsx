@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { FormEvent, useCallback, useEffect, useMemo, useState, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -37,13 +37,27 @@ const importancePill: Record<Importance, string> = {
   optional: "bg-border text-text-secondary border-border",
 };
 
-export default function DeckDetailPage() {
+export function DeckDetailPage() {
   const router = useRouter();
   const params = useParams<{ deckId: string }>();
   const deckId = params.deckId;
 
+  const searchParams = useSearchParams();
+  const highlightedCardId = searchParams.get("cardId");
+
   const [deck, setDeck] = useState<Deck | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
+
+  useEffect(() => {
+    if (highlightedCardId && cards.length > 0) {
+      const el = document.getElementById(`card-${highlightedCardId}`);
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 300);
+      }
+    }
+  }, [highlightedCardId, cards]);
   const [activeImportance, setActiveImportance] = useState<Importance | "all">("all");
   const [editingCard, setEditingCard] = useState<Card | null>(null);
   const [draft, setDraft] = useState({ front: "", back: "", importance: "good_to_know" as Importance, tags: "" });
@@ -224,8 +238,13 @@ export default function DeckDetailPage() {
             {filteredCards.map((card) => (
               <motion.article
                 key={card.id}
+                id={`card-${card.id}`}
                 variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 320, damping: 26 } } }}
-                className="rounded-[12px] border border-border bg-card p-4 shadow-sm hover:shadow-md hover:border-text-secondary/20 transition-all"
+                className={`rounded-[12px] border p-4 shadow-sm transition-all ${
+                  card.id === highlightedCardId
+                    ? "border-primary bg-primary/5 shadow-md shadow-primary/5 ring-2 ring-primary/20"
+                    : "border-border bg-card hover:shadow-md hover:border-text-secondary/20"
+                }`}
               >
                 <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
                   <span className={`rounded-full border px-2.5 py-0.5 text-[9px] font-label font-bold uppercase tracking-wider ${importancePill[card.importance]}`}>
@@ -358,5 +377,17 @@ export default function DeckDetailPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    }>
+      <DeckDetailPage />
+    </Suspense>
   );
 }
