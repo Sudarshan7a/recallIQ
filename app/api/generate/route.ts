@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/middleware";
 import { generateCards, generateCardsFromPrompt } from "@/lib/gemini";
 import { z } from "zod";
+import { generateLimiter, limitRequest } from "@/lib/ratelimit";
 
 const generateSchema = z.object({
   text: z.string().min(10).max(5000),
@@ -17,6 +18,24 @@ export async function POST(req: NextRequest) {
     const userId = getUserFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { success, limit, remaining, reset } = await limitRequest(
+      generateLimiter,
+      userId
+    );
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": limit.toString(),
+            "X-RateLimit-Remaining": remaining.toString(),
+            "X-RateLimit-Reset": reset.toString(),
+          },
+        }
+      );
     }
 
     const body = await req.json().catch(() => null);

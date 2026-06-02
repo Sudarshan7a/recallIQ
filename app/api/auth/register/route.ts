@@ -3,8 +3,8 @@ import { db } from "@/lib/db";
 import { users } from "@/db/schema";
 import { hashPassword, generateToken } from "@/lib/auth";
 import { eq } from "drizzle-orm";
-
 import { z } from "zod";
+import { registerLimiter, limitRequest } from "@/lib/ratelimit";
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -14,6 +14,28 @@ const registerSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for") ?? 
+               req.headers.get("x-real-ip") ?? 
+               "127.0.0.1";
+
+    const { success, limit, remaining, reset } = await limitRequest(
+      registerLimiter,
+      ip
+    );
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": limit.toString(),
+            "X-RateLimit-Remaining": remaining.toString(),
+            "X-RateLimit-Reset": reset.toString(),
+          },
+        }
+      );
+    }
+
     const body = await req.json().catch(() => null);
     if (!body) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });

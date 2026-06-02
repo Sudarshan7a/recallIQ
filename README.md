@@ -27,7 +27,10 @@ Built with Next.js, PostgreSQL, Drizzle ORM, FSRS, and Gemini AI.
    DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/recalliq
    GEMINI_API_KEY=your_gemini_api_key
    JWT_SECRET=your_jwt_secret
+   UPSTASH_REDIS_REST_URL=your_upstash_redis_rest_url
+   UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
    ```
+   *(Note: `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are required for Upstash Rate Limiting. Create a free Redis database on [upstash.com](https://upstash.com) to get these credentials).*
 4. Push database schema:
    ```bash
    pnpm drizzle-kit push

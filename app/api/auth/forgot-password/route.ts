@@ -1,9 +1,14 @@
+// TODO: Replace console.log with Resend email sending
+// See: https://resend.com/docs/send-with-nextjs
+// Wire when RESEND_API_KEY is available in .env.local
+
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
+import { forgotPasswordLimiter, limitRequest } from "@/lib/ratelimit";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email(),
@@ -11,6 +16,28 @@ const forgotPasswordSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for") ?? 
+               req.headers.get("x-real-ip") ?? 
+               "127.0.0.1";
+
+    const { success, limit, remaining, reset } = await limitRequest(
+      forgotPasswordLimiter,
+      ip
+    );
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": limit.toString(),
+            "X-RateLimit-Remaining": remaining.toString(),
+            "X-RateLimit-Reset": reset.toString(),
+          },
+        }
+      );
+    }
+
     const body = await req.json().catch(() => null);
     if (!body) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
@@ -34,8 +61,8 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (user) {
-      // Generate secure 6-digit OTP
-      const otp = crypto.randomInt(100000, 1000000).toString();
+      // Generates a secure 6-digit OTP using crypto.randomInt(100000, 999999)
+      const otp = crypto.randomInt(100000, 999999).toString();
       const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
 
       // Store OTP and expiry
@@ -47,10 +74,8 @@ export async function POST(req: NextRequest) {
         })
         .where(eq(users.id, user.id));
 
-      // For testing without email
-      console.log(`[PASSWORD RESET OTP FOR ${email}]: ${otp}`);
-      
-      // TODO: Wire Resend email sending here
+      // console.log prints the OTP clearly so it is visible in terminal
+      console.log(`[RecallIQ] Password reset OTP for ${email}: ${otp}`);
     }
 
     return NextResponse.json({
