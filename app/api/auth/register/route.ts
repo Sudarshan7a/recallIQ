@@ -1,9 +1,14 @@
+// TODO: Replace console.log with Resend email sending for verification
+// See: https://resend.com/docs/send-with-nextjs
+// Wire when RESEND_API_KEY is available in .env.local
+
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/db/schema";
 import { hashPassword, generateToken } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import crypto from "crypto";
 import { registerLimiter, limitRequest } from "@/lib/ratelimit";
 
 const registerSchema = z.object({
@@ -65,6 +70,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Generates a secure 6-digit OTP using crypto.randomInt(100000, 999999)
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+
     // Hash password and create user
     const hashedPassword = await hashPassword(password);
 
@@ -74,12 +83,18 @@ export async function POST(req: NextRequest) {
         name,
         email,
         password: hashedPassword,
+        verificationToken: otp,
+        verificationTokenExpires: expires,
+        emailVerified: false,
       })
       .returning({
         id: users.id,
         name: users.name,
         email: users.email,
       });
+
+    // console.log prints the OTP clearly so it is visible in terminal
+    console.log(`[RecallIQ] New user verification OTP for ${email}: ${otp}`);
 
     const token = generateToken(user.id);
 

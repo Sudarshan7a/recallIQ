@@ -8,6 +8,7 @@ import {
   integer,
   pgEnum,
   jsonb,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const importanceEnum = pgEnum("importance", [
@@ -35,6 +36,9 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
   resetToken: text("reset_token"),
   resetTokenExpires: timestamp("reset_token_expires"),
+  emailVerified: boolean("email_verified").default(false),
+  verificationToken: text("verification_token"),
+  verificationTokenExpires: timestamp("verification_token_expires"),
 });
 
 export const decks = pgTable("decks", {
