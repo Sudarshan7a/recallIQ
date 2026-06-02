@@ -28,22 +28,18 @@ export function StreakBadge({
     size === "sm" ? "w-3.5 h-3.5" : size === "lg" ? "w-5 h-5" : "w-4 h-4";
 
   // Determine state-based quiet colors (Apple design: subtle light tints or dark mode solid grays)
-  let isMilestone = false;
   let themeClasses = "";
   let Icon = Flame;
 
   if (state === "active") {
     if (days >= 100) {
-      isMilestone = true;
       Icon = Trophy;
       themeClasses =
         "bg-amber-50/80 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/30";
     } else if (days >= 30) {
-      isMilestone = true;
       themeClasses =
         "bg-orange-50/80 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 border-orange-200/40 dark:border-orange-900/20";
     } else if (days >= 7) {
-      isMilestone = true;
       themeClasses =
         "bg-yellow-50/80 dark:bg-yellow-950/20 text-yellow-600 dark:text-yellow-400 border-yellow-200/40 dark:border-yellow-900/20";
     } else {

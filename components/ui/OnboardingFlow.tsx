@@ -11,22 +11,12 @@ interface Deck {
   cardCount?: number;
 }
 
-interface Stats {
-  streak: number;
-  xp: number;
-  cards_reviewed_today: number;
-  total_cards: number;
-  due_today: number;
-  accuracy_rate: number;
-}
-
 interface OnboardingFlowProps {
   decks: Deck[];
-  stats: Stats | null;
   onRefresh: () => void;
 }
 
-export function OnboardingFlow({ decks, stats, onRefresh }: OnboardingFlowProps) {
+export function OnboardingFlow({ decks, onRefresh }: OnboardingFlowProps) {
   // Calculate current step based on database state
   const totalCards = decks.reduce((acc, d) => acc + (d.cardCount || 0), 0);
   let step = 1;

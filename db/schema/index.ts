@@ -7,7 +7,6 @@ import {
   real,
   integer,
   pgEnum,
-  jsonb,
   boolean,
 } from "drizzle-orm/pg-core";
 

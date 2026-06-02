@@ -22,8 +22,6 @@ export function DeckCard({ deck, onEdit, onDelete }: DeckCardProps) {
   const isError = deck.color === "warning" || deck.mastery < 35;
   const isSecondary = deck.color === "success" || deck.mastery > 80;
 
-  // Brand palette accents
-  const accentHex = isError ? "#E24B4A" : isSecondary ? "#1D9E75" : "#5C51E8";
   const accentBg = isError
     ? "bg-[#E24B4A]"
     : isSecondary

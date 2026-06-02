@@ -127,7 +127,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Onboarding flow sits where the dashboard content normally sits */}
-        <OnboardingFlow decks={decks} stats={stats} onRefresh={loadData} />
+        <OnboardingFlow decks={decks} onRefresh={loadData} />
       </div>
     );
   }

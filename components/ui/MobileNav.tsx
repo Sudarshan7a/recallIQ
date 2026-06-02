@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Layers, BarChart2, User } from "lucide-react";
-import { motion } from "framer-motion";
 
 interface MobileNavProps {
   dueCount: number;

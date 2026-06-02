@@ -6,7 +6,6 @@ import { Brain, ArrowRight, Sparkles } from "lucide-react";
 
 export default function OnboardingWelcome() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleNextStep = () => {
