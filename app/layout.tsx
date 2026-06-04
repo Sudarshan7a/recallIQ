@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Inter } from "next/font/google";
 import "./globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -39,7 +40,10 @@ export default function RootLayout({
             backgroundSize: "24px 24px",
           }}
         />
-        <div className="relative z-10 flex min-h-full flex-col">{children}</div>
+        <div className="relative z-10 flex min-h-full flex-col">
+          {children}
+        </div>
+        <SpeedInsights />
       </body>
     </html>
   );
