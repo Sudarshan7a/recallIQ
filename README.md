@@ -151,6 +151,74 @@ Get current logged in user.
 
 ---
 
+#### POST /api/auth/forgot-password
+
+Request a 6-digit OTP for password reset. Logs to terminal in development.
+
+**Body:**
+
+```json
+{
+  "email": "rahul@test.com"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "If an account exists with that email, you will receive a reset code"
+}
+```
+
+---
+
+#### POST /api/auth/reset-password
+
+Reset user password using the 6-digit OTP code.
+
+**Body:**
+
+```json
+{
+  "token": "123456",
+  "newPassword": "newpassword123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true
+}
+```
+
+---
+
+#### POST /api/auth/verify-email
+
+Verify user's email address using the 6-digit OTP code.
+
+**Body:**
+
+```json
+{
+  "email": "rahul@test.com",
+  "token": "123456"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true
+}
+```
+
+---
+
 ### Decks
 
 #### GET /api/decks
@@ -477,23 +545,65 @@ Get dashboard stats for current user.
 
 ---
 
+### Search
+
+#### GET /api/search
+
+Search decks (by name/description) and cards (by front/back) for the authenticated user.
+
+**Query params:**
+
+- `q` — search query string (minimum 2 characters required, returns empty results if shorter)
+
+**Response:**
+
+```json
+{
+  "decks": [
+    {
+      "id": "1f64d1c5-4e65-4a4c-9aa5-b8fdbb8c2e11",
+      "name": "Networking",
+      "description": "Computer networking concepts",
+      "domain": "cs"
+    }
+  ],
+  "cards": [
+    {
+      "id": "5d91a5ad-4cc5-4017-88f1-1b4456fe445c",
+      "front": "What does SSL stand for?",
+      "back": "Secure Sockets Layer",
+      "importance": "core",
+      "deck_id": "1f64d1c5-4e65-4a4c-9aa5-b8fdbb8c2e11",
+      "deckName": "Networking"
+    }
+  ]
+}
+```
+
+---
+
 ## Database Schema
 
 Note: Database columns use snake_case. API responses return camelCase via Drizzle ORM mapping.
 
 ### users
 
-| Column            | Type      | Notes            |
-| ----------------- | --------- | ---------------- |
-| id                | uuid      | primary key      |
-| name              | varchar   |                  |
-| email             | varchar   | unique           |
-| password          | text      | bcrypt hashed    |
-| desired_retention | real      | default 0.9      |
-| xp                | integer   | default 0        |
-| streak            | integer   | default 0        |
-| last_studied_at   | timestamp | for streak logic |
-| created_at        | timestamp |                  |
+| Column                     | Type      | Notes                                    |
+| -------------------------- | --------- | ---------------------------------------- |
+| id                         | uuid      | primary key                              |
+| name                       | varchar   |                                          |
+| email                      | varchar   | unique                                   |
+| password                   | text      | bcrypt hashed                            |
+| desired_retention          | real      | default 0.9                              |
+| xp                         | integer   | default 0                                |
+| streak                     | integer   | default 0                                |
+| last_studied_at            | timestamp | for streak logic                         |
+| created_at                 | timestamp |                                          |
+| reset_token                | text      | OTP for password reset                   |
+| reset_token_expires        | timestamp | expiration of password reset OTP         |
+| email_verified             | boolean   | true if user's email is verified         |
+| verification_token         | text      | OTP for email verification               |
+| verification_token_expires | timestamp | expiration of email verification OTP     |
 
 ### decks
 
