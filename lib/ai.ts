@@ -1,8 +1,22 @@
 import { GoogleGenAI } from "@google/genai";
 import Groq from "groq-sdk";
 
-const geminiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY! });
+let geminiClient: GoogleGenAI | null = null;
+let groqClient: Groq | null = null;
+
+function getGeminiClient(): GoogleGenAI {
+  if (!geminiClient) {
+    geminiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "placeholder" });
+  }
+  return geminiClient;
+}
+
+function getGroqClient(): Groq {
+  if (!groqClient) {
+    groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY || "placeholder" });
+  }
+  return groqClient;
+}
 
 export type AIProvider = "gemini" | "groq";
 
@@ -37,7 +51,8 @@ export async function generateContentInterceptor({
 }
 
 async function callGemini(prompt: string): Promise<string> {
-  const response = await geminiClient.models.generateContent({
+  const client = getGeminiClient();
+  const response = await client.models.generateContent({
     model: "gemini-2.5-flash",
     contents: prompt,
   });
@@ -46,7 +61,8 @@ async function callGemini(prompt: string): Promise<string> {
 }
 
 async function callGroq(prompt: string): Promise<string> {
-  const response = await groqClient.chat.completions.create({
+  const client = getGroqClient();
+  const response = await client.chat.completions.create({
     model: "llama-3.1-8b-instant",
     messages: [
       {
